@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Page Title</title>
+    <title>MyChat</title>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.png">
     <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
     <link href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
@@ -15,11 +16,11 @@
 <body>
 
     <div id="frame">
-        <div id="sidepanel">
+        <div id="sidepanel" style="border-right: 0.5px solid #99999B;">
             <div id="profile">
                 <div class="wrap">
-                    <img id="profile-img" src="http://emilcarlsson.se/assets/mikeross.png" class="online" alt="" />
-                    <p>Mike Ross</p>
+                    <img id="profile-img" src="./images/user.png" class="online" alt="" />
+                    <p style="color:white;font-weight: bold;">Amy Pyae</p>
                     <i class="fa fa-chevron-down expand-button" aria-hidden="true"></i>
                     <div id="status-options">
                         <ul>
@@ -45,27 +46,26 @@
             </div>
             <div id="contacts">
                 <ul>
-                    <li class="contact">
+                    <li :key="index" class="contact" v-for="(item,index) in contacts" @click="onClickedContact(item)">
                         <div class="wrap">
-                            <span class="contact-status online"></span>
-                            <img src="http://emilcarlsson.se/assets/louislitt.png" alt="" />
+                             <img src="./images/user.png" alt="" />
                             <div class="meta">
-                                <p class="name">Louis Litt</p>
-                                <p class="preview">You just got LITT up, Mike.</p>
+                                <p class="name">{{item.employee_id.name}}</p>
+                               <p class="preview">{{item.chat_id.last_message}}</p>
                             </div>
                         </div>
                     </li> 
                 </ul>
             </div>
             <div id="bottom-bar">
-                <button id="addcontact"><i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> <span>Add contact</span></button>
-                <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>Settings</span></button>
+                <button id="addcontact"><i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> <span>Create Group</span></button>
+                <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button>
             </div>
         </div>
-        <div class="content">
+        <div class="content" v-if="selected_user">
             <div class="contact-profile">
-                <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
-                <p>Harvey Specter</p>
+                <img src="./images/user.png" alt="" />
+                <p style="color: white;font-weight: bold;">{{selected_user?selected_user.name : null}}</p>
                 
                 <div class="social-media">
                     <i class="fa fa-facebook" aria-hidden="true"></i>
@@ -75,39 +75,28 @@
             </div>
             <div class="messages" >
                 <ul >
-                    <li class="sent">
-                         <p>How the hell am I supposed to get a jury to believe you when I am not even sure that I do?!</p>
+                    <li :class="message.sender_id == '636127fde35da5b6e8a4e3e9' ? 'replies' : 'sent'" v-for="message in messages">
+                         <p>{{message.message}}</p>
                     </li>
-                    <li class="replies">
-                         <p>When you're backed against the wall, break the god damn thing down.</p>
-                    </li>
-                    <li class="replies">
-                         <p>Excuses don't win championships.</p>
-                    </li>
-                    <li class="sent">
-                         <p>Oh yeah, did Michael Jordan tell you that?</p>
-                    </li>
-                    <li class="replies">
-                         <p>No, I told him that.</p>
-                    </li>
-                    <li class="replies">
-                         <p>What are your choices when someone puts a gun to your head?</p>
-                    </li>
-                    <li class="sent">
-                         <p>What are you talking about? You do what they say or they shoot you.</p>
-                    </li>
-                    <li class="replies">
-                         <p>Wrong. You take the gun, or you pull out a bigger one. Or, you call their bluff. Or, you do any one of a hundred and forty six other things.</p>
-                    </li> 
+                    
                 </ul>
-            </div>xs
+            </div>
             <div class="message-input">
-                <div class="wrap">
-                    <input type="text" placeholder="Write your message..." />
+                <div class="wrap" style="margin-bottom: 5px;;">
                     <i class="fa fa-paperclip attachment" aria-hidden="true"></i>
+
+                    <input v-on:keyup.enter="onClickedSend" v-model="message" type="text" placeholder="Write your message..." style="background-color: #2A3A42 ;color:white"/>
                     <button class="submit" @click="onClickedSend"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
                 </div>
             </div>
+        </div>
+        <div class="content" v-else style="background-image:url('./images/Screenshot.png');background-repeat: no-repeat;background-attachment: fixed;background-size: 600px;background-position: 700px 300px;">
+           
+                <!-- <img src="./images/Screenshot.png" alt="" style="width:600px;height:350px;"/> -->
+                
+                 
+             
+            
         </div>
     </div>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
@@ -120,34 +109,74 @@
         const { createApp } = Vue
       
         createApp({
-          data() {
-            return {
-              message: 'Hello Vue!',
-              socket :  io()
-              
-            //   ('http://localhost:3000',{
-            //       secure: true,
-            //       rejectUnauthorized: false,
-            //       rememberUpgrade:true 
+            data() {
+                return {
+                    message: 'Hello Vue!',
+                    //   socket :  io()
+                    
+                    //   ('http://localhost:3000',{
+                    //       secure: true,
+                    //       rejectUnauthorized: false,
+                    //       rememberUpgrade:true 
 
 
-            //   })
-
-            }
-          },
-          methods : {
-            onClickedSend(){
-
+                    //   })
+                    message : null,
+                    messages : [],
+                    contacts : [],
+                    selected_user : null,
+                    selected_chat_id : null
+                }
             },
-            onSocket(){
-                this.socket.on('some event', (message) => {
-                   console.log(message)
-                });
+            methods : {
+                onClickedSend(){
+                    let data = {
+                        receiver_id : this.selected_user._id,
+                        sender_id : '636127fde35da5b6e8a4e3e9',
+                        chat_id : this.selected_chat_id,
+                        message : this.message
+                    }
+
+                    axios.post(`/api/store-conversation`,   data).then(({data}) => {
+                         this.messages.push(data)
+                        
+                        let contactIndex = this.contacts.findIndex(e => e.chat_id._id == this.selected_chat_id)
+                         this.contacts[contactIndex].chat_id.last_message = this.message;
+                        this.message = '';
+                     }).catch(error => {
+                        
+                    })
+                },
+                // onSocket(){
+                //     this.socket.on('some event', (message) => {
+                //        console.log(message)
+                //     });
+                // },
+                onClickedContact(chat){
+                    this.selected_user = chat.employee_id;
+                    this.selected_chat_id = chat.chat_id._id;
+                    axios.get(`/api/get-conversations`, {
+                        params :{
+                            chat_id:chat.chat_id._id
+                        }
+                    }).then(({data}) => {
+                        this.messages = data.conversations;
+                    }).catch(error => {
+                        
+                    })
+                },
+                loadData(){
+                    axios.get(`/api/get-participant`).then(({data}) => {
+                        this.contacts = data.participants;
+                    }).catch(error => {
+                        
+                    })
+                }
+            },
+            mounted(){
+                this.loadData();
+                //    this.onSocket()
             }
-          },
-          mounted(){
-            //    this.onSocket()
-          }
         }).mount('#frame')
       </script>
  </body>

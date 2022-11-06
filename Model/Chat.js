@@ -10,10 +10,20 @@ const ChatSchecma=new mongoose.Schema({
         required: true,
         default: false
     }, 
+    last_message : {
+        type : String,
+        required: false
+    },
+    conversations: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "Conversation"
+        }
+    ],
     details: [
         {
             type: Schema.Types.ObjectId,
-            ref: "Participants"
+            ref: "Participant"
         }
     ]
 },{ timestamps: true });
