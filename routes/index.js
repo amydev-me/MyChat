@@ -113,6 +113,8 @@ router.post('/api/store-conversation', async(req, res) => {
                 last_message : reqBody.message,
                 $push: { conversations: mongoose.Types.ObjectId(_newConv._id) } }
         );
+console.log(io)
+        // io.emit('some event', { someProperty: 'some value', otherProperty: 'other value' }); 
 
         res.send(_newConv)
     
@@ -144,7 +146,8 @@ router.get('/api/get-conversations', async (req, res) => {
 });
 
 router.get('/api/get-participant', isAuthenticated, async (req, res) => {
-    let employee_id = '636127fde35da5b6e8a4e3e9';
+    let employee_id = req.query.current_user_id;
+    
     let chatIds = await getChatID(employee_id);
  
     let participants = await Participant.find({

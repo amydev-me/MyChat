@@ -12,7 +12,7 @@ const isAuthenticated = async (req,res,next)=>{
     try { 
         const token = req.body.token || req.query.token || req.headers["x-access-token"];
         if(!token){
-            return next('Please login to access the data');
+            return res.status(401).send("Invalid Token");
         }
         const decoded = await jwt.verify(token,process.env.SECRET_KEY);
         // req.user = await userModel.findById(verify.id);

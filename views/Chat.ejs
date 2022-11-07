@@ -20,7 +20,7 @@
             <div id="profile">
                 <div class="wrap">
                     <img id="profile-img" src="./images/user.png" class="online" alt="" />
-                    <p style="color:white;font-weight: bold;">Amy Pyae</p>
+                    <p style="color:white;font-weight: bold;">{{current_user.name}}</p>
                     <i class="fa fa-chevron-down expand-button" aria-hidden="true"></i>
                     <div id="status-options">
                         <ul>
@@ -75,7 +75,7 @@
             </div>
             <div class="messages" >
                 <ul >
-                    <li :class="message.sender_id == '636127fde35da5b6e8a4e3e9' ? 'replies' : 'sent'" v-for="message in messages">
+                    <li :class="message.sender_id == this.current_user._id ? 'replies' : 'sent'" v-for="message in messages">
                          <p>{{message.message}}</p>
                     </li>
                     
@@ -125,14 +125,18 @@
                     messages : [],
                     contacts : [],
                     selected_user : null,
-                    selected_chat_id : null
+                    selected_chat_id : null,
+                    current_user : {
+                        _id : null,
+                        name : null
+                    }
                 }
             },
             methods : {
                 onClickedSend(){
                     let data = {
                         receiver_id : this.selected_user._id,
-                        sender_id : '636127fde35da5b6e8a4e3e9',
+                        sender_id : this.current_user._id,
                         chat_id : this.selected_chat_id,
                         message : this.message
                     }
@@ -148,9 +152,9 @@
                     })
                 },
                 // onSocket(){
-                //     this.socket.on('some event', (message) => {
-                //        console.log(message)
-                //     });
+                    // this.socket.on('some event', (message) => {
+                    //    console.log(message)
+                    // });
                 // },
                 onClickedContact(chat){
                     this.selected_user = chat.employee_id;
@@ -161,19 +165,37 @@
                         }
                     }).then(({data}) => {
                         this.messages = data.conversations;
+                        this.socket.on(`chat-${chat.chat_id._id}`, (message) => {
+                            console.log(message)
+                        });
                     }).catch(error => {
                         
                     })
                 },
                 loadData(){
-                    axios.get(`/api/get-participant`).then(({data}) => {
+                    const headers = 
+                    {      
+                        "x-access-token": localStorage.getItem('token'),      
+                        "Content-Type": "application/json",      
+                        Accept: "application/json",    
+                    };  
+                    axios.get(`/api/get-participant`, {
+                        headers : headers,
+                        params : {
+                            current_user_id : this.current_user._id
+                        }
+                    }).then(({data}) => {
                         this.contacts = data.participants;
-                    }).catch(error => {
                         
+                    }).catch(error => {
+                        if(error.response.status == 401){
+                            // window.location.href = '/login'
+                        }
                     })
                 }
             },
             mounted(){
+                this.current_user = JSON.parse(localStorage.getItem('user'))
                 this.loadData();
                 //    this.onSocket()
             }

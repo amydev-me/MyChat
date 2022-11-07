@@ -18,22 +18,23 @@ function onClickedSignIn(event){
         email : document.getElementById('inputEmail').value,
         password : document.getElementById('inputPassword').value
     }
-    console.log(credentials)
-    axios.post(`/api/login`, credentials).then(({data}) => {
-        if(data.role == 'Planner'){
-            window.location.href = window.location.origin;
-        }else{
-            window.location.href = '/';
-        }
+     axios.post(`/api/login`, credentials).then(({data}) => {
+        localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('token', data.token)
+        window.location.href = '/';
+        
         // window.location.href = window.location.origin;
     }).catch(error => {
-        if(error.response.data){
-            displayMessageDialog(error.response.data.message)
-        }
-        else{
-            displayMessageDialog("Failed to login!!")
-        }
-        
+         
+        // if(error.response.data.status == 401){
+        //     window.location.href = '/login';
+        // }
+        // if(error.response.data){
+        //     displayMessageDialog(error.response.data.message)
+        // }
+        // else{
+        //     displayMessageDialog("Failed to login!!")
+        // } 
     })
 }
 
