@@ -73,10 +73,14 @@
                      <i class="fa fa-instagram" aria-hidden="true"></i>
                 </div>
             </div>
-            <div class="messages" >
-                <ul >
-                    <li :class="message.sender_id == this.current_user._id ? 'replies' : 'sent'" v-for="message in messages">
-                         <p>{{message.message}}</p>
+            <div class="messages" id="scroll-to-bottom">
+                <ul>
+                    <li  :class="message.sender_id == this.current_user._id ? 'replies' : 'sent'" v-for="message in messages">
+                        <p>
+                            {{message.message}}<br>
+                            <span style="font-size:10px;float: right;;">{{formatDate(message.createdAt)}}</span>
+
+                        </p> 
                     </li>
                     
                 </ul>
@@ -86,7 +90,7 @@
                     <i class="fa fa-paperclip attachment" aria-hidden="true"></i>
 
                     <input v-on:keyup.enter="onClickedSend" v-model="message" type="text" placeholder="Write your message..." style="background-color: #2A3A42 ;color:white"/>
-                    <button class="submit" @click="onClickedSend"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
+                    <button class="submit" @click="onClickedScoll"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
                 </div>
             </div>
         </div>
@@ -103,8 +107,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
-    <script src="./js/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 
+    <script src="./js/socket.io.js"></script>
+    
     <script>
         const { createApp } = Vue
       
@@ -112,7 +118,7 @@
             data() {
                 return {
                     message: 'Hello Vue!',
-                    //   socket :  io()
+                      socket :  io(),
                     
                     //   ('http://localhost:3000',{
                     //       secure: true,
@@ -133,6 +139,13 @@
                 }
             },
             methods : {
+                formatDate(_date){
+                    return moment(_date).format('hh:mm A')
+                },
+                onClickedScoll(){
+                    let scroll_to_bottom = document.getElementById('scroll-to-bottom');
+                    scroll_to_bottom.scrollTop = scroll_to_bottom.scrollHeight;
+                },
                 onClickedSend(){
                     let data = {
                         receiver_id : this.selected_user._id,
@@ -142,32 +155,46 @@
                     }
 
                     axios.post(`/api/store-conversation`,   data).then(({data}) => {
-                         this.messages.push(data)
+                        this.messages.push(data)
                         
                         let contactIndex = this.contacts.findIndex(e => e.chat_id._id == this.selected_chat_id)
-                         this.contacts[contactIndex].chat_id.last_message = this.message;
+                        this.contacts[contactIndex].chat_id.last_message = this.message;
                         this.message = '';
+                        let that  = this;
+                        setTimeout(function(){
+                                that.onClickedScoll()
+                        },100)
                      }).catch(error => {
                         
                     })
                 },
-                // onSocket(){
-                    // this.socket.on('some event', (message) => {
-                    //    console.log(message)
-                    // });
-                // },
+                onSocket(chat_id){
+                    let that  = this;
+                    this.socket.on(`some_event`, (message) => { 
+                        if(that.current_user._id != message.sender_id){
+                            this.messages.push(message);
+                            setTimeout(function(){
+                                that.onClickedScoll()
+                            },100)
+                        }
+                    });
+                },
                 onClickedContact(chat){
                     this.selected_user = chat.employee_id;
-                    this.selected_chat_id = chat.chat_id._id;
+                    this.selected_chat_id = chat.chat_id._id; 
                     axios.get(`/api/get-conversations`, {
                         params :{
                             chat_id:chat.chat_id._id
                         }
                     }).then(({data}) => {
                         this.messages = data.conversations;
-                        this.socket.on(`chat-${chat.chat_id._id}`, (message) => {
-                            console.log(message)
-                        });
+                        
+                        let that = this;
+                       
+                        this.onSocket(chat.chat_id._id)
+                        setTimeout(function(){
+                            that.onClickedScoll()
+                        },100)
                     }).catch(error => {
                         
                     })
@@ -186,18 +213,19 @@
                         }
                     }).then(({data}) => {
                         this.contacts = data.participants;
-                        
+                       
                     }).catch(error => {
-                        if(error.response.status == 401){
-                            // window.location.href = '/login'
-                        }
+                        // if(error.response.status == 401){
+                        //     // window.location.href = '/login'
+                        // }
                     })
                 }
             },
             mounted(){
                 this.current_user = JSON.parse(localStorage.getItem('user'))
                 this.loadData();
-                //    this.onSocket()
+                console.log(moment())
+                   
             }
         }).mount('#frame')
       </script>

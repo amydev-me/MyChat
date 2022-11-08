@@ -2,6 +2,7 @@ const express = require('express')
 const app = express(); 
 const http = require('http').Server(app);
 const io = require('socket.io')(http,  { cors: { origin: '*' } });
+global.io = io;
 require('dotenv').config()
 const port = process.env.PORT
  
@@ -10,6 +11,7 @@ require("./config/database")
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 app.set('view engine','ejs')
+ 
  
 app.use(express.static('public'))
 app.use(require("./routes/index"))

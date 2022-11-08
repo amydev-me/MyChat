@@ -541,11 +541,11 @@ body {
   }
   #frame .content .messages {
     height: auto;
-    min-height: calc(100% - 93px);
-    max-height: calc(100% - 93px);
+    min-height: calc(100% - 120px);
+    max-height: calc(100% - 120px);
     overflow-y: scroll;
     overflow-x: hidden;
-    background-color: #2f4154;
+    background-color: #304154;
   }
   @media screen and (max-width: 735px) {
     #frame .content .messages {

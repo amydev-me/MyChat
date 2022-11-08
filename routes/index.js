@@ -81,7 +81,7 @@ router.post('/api/create-employee' , async (req, res) => {
 
 router.post('/api/store-conversation', async(req, res) => {
     const reqBody = req.body; 
-    
+
     try{
 
         if(!reqBody.chat_id){
@@ -113,8 +113,8 @@ router.post('/api/store-conversation', async(req, res) => {
                 last_message : reqBody.message,
                 $push: { conversations: mongoose.Types.ObjectId(_newConv._id) } }
         );
-console.log(io)
-        // io.emit('some event', { someProperty: 'some value', otherProperty: 'other value' }); 
+ 
+        global.io.emit(`some_event`, _newConv); 
 
         res.send(_newConv)
     
