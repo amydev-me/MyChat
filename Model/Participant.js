@@ -12,4 +12,4 @@ const ParticipantsSchema=new mongoose.Schema({
     },
 });
 
-module.exports=new mongoose.model("participants", ParticipantsSchema);
+module.exports=new mongoose.model("participant", ParticipantsSchema);

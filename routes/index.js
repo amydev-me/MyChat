@@ -145,11 +145,21 @@ router.get('/api/get-conversations', async (req, res) => {
     })
 });
 
+router.get('/api/get-contacts', async(req,res) => {
+    let employees = await Employee.find().exec(function(err, data){
+        res.send({
+            employees : data
+        });
+    })
+
+    
+})
+
 router.get('/api/get-participant', isAuthenticated, async (req, res) => {
     let employee_id = req.query.current_user_id;
     
     let chatIds = await getChatID(employee_id);
- 
+    
     let participants = await Participant.find({
         "chat_id" : { $in : chatIds },
         "employee_id" : { $ne : employee_id}
@@ -159,13 +169,43 @@ router.get('/api/get-participant', isAuthenticated, async (req, res) => {
     .exec(function (err, data) {
         res.send({
             participants : data
+            
         })
-    });
-
-    
-    // res.send({
-    //     participants
-    // })
+    }); 
 });
+
+function getEmployees(employees, chat_id){
+    let _employees = [];
+    employees.forEach(e => {
+        _employees.push({
+            chat_id : mongoose.Types.ObjectId(chat_id),
+            employee_id : mongoose.Types.ObjectId(e)
+        })
+    })
+    return _employees;
+}
+
+router.post('/api/create-group', async(req, res) => {
+    const reqBody = req.body; 
+    
+    try{ 
+        const newChat= await new Chat({
+            name:reqBody.name,
+            is_group :true
+        });
+        const _newChat = await newChat.save();
+        reqBody.chat_id = _newChat._id;
+        let employees =  await getEmployees(reqBody.employees, _newChat._id)
+       
+        const insertMany =  await  Participant.insertMany(employees) 
+        
+        res.send('OK')
+
+
+    }catch(e){
+        res.status(500).send('Error')
+    }
+
+})
 
 module.exports = router;

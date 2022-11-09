@@ -17,33 +17,36 @@
 
     <div id="frame">
         <div id="sidepanel" style="border-right: 0.5px solid #99999B;" v-show="showContact">
-            
             <div id="profile">
                 <div class="wrap">
                     <p>Add Group participants</p>
+                    <button type="button" class="close" @click="showContact = false;"> 
+                        <i class="fa fa-times"  style="color: white !important;"></i>
+                    </button>
                 </div>
             </div>
-            <div id="search">
-                <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
-                <input type="text" placeholder="Search contacts..." />
+            <div id="group-name">
+                <input type="text" placeholder="Group Name" style="margin-bottom:5px;" v-model="group.name"/>
+               <!-- <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
+                <input type="text" placeholder="Search contacts..." />-->
             </div>
-            <div id="contacts" v-show="showContact">
-                
+            <div id="contacts" v-show="showContact"> 
                 <ul>
-                    <li :key="index" class="contact" v-for="(item,index) in contacts">
+                    <li :key="index" class="contact" v-for="(item,index) in employees">
+                        <input type="checkbox" v-model="item.selected">
                         <div class="wrap" >
-                             <img src="./images/user.png" alt="" />
+                            <img src="./images/user.png"  />
                             <div class="meta">
-                                <p class="name">{{item.employee_id.name}}</p>
+                                <p class="name">{{item.name}}</p>
                                <p class="preview">Software Engineer</p>
                             </div>
                         </div> 
                     </li> 
                 </ul>
             </div>
-            <div id="bottom-bar">
-                <button id="addcontact" @click="onClickedGroup"><i class="fa fa-user-plus fa-fw" aria-hidden="true" ></i> <span>Create Group</span></button>
-                <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button>
+            <div id="group-bar" style="margin:0 auto;padding: 0 auto;">
+                <button  id="addcontact" @click="onClickedCreateGroup" ><i class="fa fa-user-plus fa-fw" aria-hidden="true" ></i> <span>Create Group</span></button>
+                <!-- <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button> -->
             </div>
         </div>
         <div id="sidepanel" style="border-right: 0.5px solid #99999B;" v-show="!showContact">
@@ -96,7 +99,7 @@
                 </ul>
             </div>
             <div id="bottom-bar">
-                <button id="addcontact" @click="onClickedGroup"><i class="fa fa-user-plus fa-fw" aria-hidden="true" ></i> <span>Create Group</span></button>
+                <button id="addcontact" @click="onClickedGroupSidebar"><i class="fa fa-users fa-fw" aria-hidden="true" ></i> <span>New Group</span></button>
                 <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button>
             </div>
         </div>
@@ -132,7 +135,7 @@
                 </div>
             </div>
         </div>
-        <div class="content" v-else style="background-image:url('./images/Screenshot.png');background-repeat: no-repeat;background-attachment: fixed;background-size: 600px;background-position: 700px 300px;">
+        <div class="content" v-else style="background-image:url('./images/Screenshot.png');background-repeat: no-repeat;background-attachment: fixed;background-size: 600px;background-position: center;">
            
                 <!-- <img src="./images/Screenshot.png" alt="" style="width:600px;height:350px;"/> -->
  
@@ -152,9 +155,12 @@
         createApp({
             data() {
                 return {
+                    group :{
+                        name : null,
+                        employees : []
+                    },
                     showContact: false,
-                    message: 'Hello Vue!',
-                      socket :  io(),
+                    socket :  io(),
                     
                     //   ('http://localhost:3000',{
                     //       secure: true,
@@ -166,6 +172,7 @@
                     message : null,
                     messages : [],
                     contacts : [],
+                    employees:[],
                     selected_user : null,
                     selected_chat_id : null,
                     current_user : {
@@ -175,7 +182,24 @@
                 }
             },
             methods : {
-                onClickedGroup(){
+                onClickedCreateGroup(){
+                    let empIds = [];
+                    this.employees.forEach(e => {
+                        if(e.selected == true){
+                            empIds.push(e._id);
+                        }
+                    })
+                  
+                    axios.post(`/api/create-group`, {
+                        name : this.group.name,
+                        employees : empIds
+                    }).then(({data}) => {
+                         
+                    }).catch(error => { 
+
+                    })
+                },
+                onClickedGroupSidebar(){
                     this.showContact = true;
                 },
                 formatDate(_date){
@@ -203,7 +227,7 @@
                         setTimeout(function(){
                                 that.onClickedScoll()
                         },100)
-                     }).catch(error => {
+                    }).catch(error => {
                         
                     })
                 },
@@ -254,6 +278,31 @@
                         this.contacts = data.participants;
                        
                     }).catch(error => {
+                       
+                        if(error.response.status == 401){
+                            console.log(error.response.status)
+                            window.location.href = '/login'
+                        }
+                    })
+                },
+                getEmployees(){
+                    const headers = 
+                    {      
+                        "x-access-token": localStorage.getItem('token'),      
+                        "Content-Type": "application/json",      
+                        Accept: "application/json",    
+                    };  
+                    axios.get(`/api/get-contacts`, {
+                        headers : headers 
+                    }).then(({data}) => {
+                        let _emps = data.employees;
+                        _emps.map(e => 
+                            {
+                                e.selected = false;
+                            }
+                        );
+                        this.employees = _emps;
+                    }).catch(error => {
                         // if(error.response.status == 401){
                         //     // window.location.href = '/login'
                         // }
@@ -262,8 +311,8 @@
             },
             mounted(){
                 this.current_user = JSON.parse(localStorage.getItem('user'))
-                this.loadData();
-                console.log(moment())
+                this.getEmployees();
+                this.loadData(); 
                    
             }
         }).mount('#frame')

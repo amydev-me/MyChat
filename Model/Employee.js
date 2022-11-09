@@ -17,6 +17,14 @@ const EmployeeSchema=new mongoose.Schema({
     password:{
         type:String,
         required: true,
+    },
+    position:{
+        type:String,
+        required: false,
+    },
+    image_url:{
+        type:String,
+        required:false
     }
 });
 
