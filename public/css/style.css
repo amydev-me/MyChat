@@ -1,0 +1,169 @@
+body{
+    font-family: 'Roboto', sans-serif;
+  
+    overflow-x: hidden;
+}
+.full-width {
+    font-weight:bold;
+    color:#333333; 
+    height: 120px;
+    width:120px;
+    text-align: center;  
+    line-height: 120px;
+    border-radius: 0px;
+}
+.half-width {
+    font-weight:bold;
+    color:#333333; 
+    height: 60px;
+    width:200px;
+    text-align: center;  
+    line-height: 60px;
+    border-radius: 0px;
+}
+.empty-col {
+    height: 60px;
+    width:50px;
+}
+.inline-block-display {
+    display: inline-block;
+}
+.border-none{
+    border: none;
+}
+.grid-style{
+    border : 1px solid #E9EDEF;
+}
+
+.container-viewport {
+    position: absolute;
+    top: 100px;
+    right: 250px;
+    left: 250px;
+    height: 300px;
+    background-color: #eee;
+  }
+
+  .table-column{
+      padding : 0;
+      margin:0;
+      min-width: 50px !important;
+      min-height: 50px !important;
+      
+  }
+
+  .bg-light-gray {
+    background-color: #f7f7f7;
+}
+
+.full-height{
+    height: 100%;
+}
+
+.cursor-pointer{
+    cursor: pointer;
+}
+
+.button-full-wh{
+    height: 100% !important;
+    width:100%;
+}
+
+.bg-sky.box-shadow {
+    box-shadow: 0px 5px 0px 0px #00a2a7
+}
+
+.bg-orange.box-shadow {
+    box-shadow: 0px 5px 0px 0px #af4305
+}
+
+.bg-green.box-shadow {
+    box-shadow: 0px 5px 0px 0px #4ca520
+}
+
+.bg-yellow.box-shadow {
+    box-shadow: 0px 5px 0px 0px #dcbf02
+}
+
+.bg-pink.box-shadow {
+    box-shadow: 0px 5px 0px 0px #e82d8b
+}
+
+.bg-purple.box-shadow {
+    box-shadow: 0px 5px 0px 0px #8343e8
+}
+
+.bg-lightred.box-shadow {
+    box-shadow: 0px 5px 0px 0px #d84213
+}
+
+
+.bg-sky {
+    background-color: #02c2c7;
+    width : 100%
+}
+
+.bg-orange {
+    background-color: #e95601
+}
+
+.bg-green {
+    background-color: #5bbd2a
+}
+
+.bg-yellow {
+    background-color: #f0d001
+}
+
+.bg-pink {
+    background-color: #ff48a4
+}
+
+.bg-purple {
+    background-color: #9d60ff
+}
+
+.bg-lightred {
+    background-color: #ff5722
+}
+
+.padding-15px-lr {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+.padding-5px-tb {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+.margin-10px-bottom {
+    margin-bottom: 10px;
+}
+.border-radius-5 {
+    border-radius: 5px;
+}
+
+.margin-10px-top {
+    margin-top: 10px;
+}
+.font-size14 {
+    font-size: 14px;
+}
+
+.text-light-gray {
+    color: #d6d5d5;
+}
+.font-size13 {
+    font-size: 13px;
+}
+table{
+    border-collapse: unset;
+    border-spacing: 5px;
+}
+.table td {
+    padding: 0;
+    vertical-align: top;
+    max-width: 50px;;
+    border-spacing: 5px;
+
+}
+

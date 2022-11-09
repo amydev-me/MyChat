@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MyChat</title>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.png">
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <link href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+
+    <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'>
+    <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
+     <link rel="stylesheet" href="./css/chat.css">
+    
+
+ </head>
+<body>
+
+    <div id="frame">
+        <div id="sidepanel" style="border-right: 0.5px solid #99999B;" v-show="showContact">
+            
+            <div id="profile">
+                <div class="wrap">
+                    <p>Add Group participants</p>
+                </div>
+            </div>
+            <div id="search">
+                <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
+                <input type="text" placeholder="Search contacts..." />
+            </div>
+            <div id="contacts" v-show="showContact">
+                
+                <ul>
+                    <li :key="index" class="contact" v-for="(item,index) in contacts">
+                        <div class="wrap" >
+                             <img src="./images/user.png" alt="" />
+                            <div class="meta">
+                                <p class="name">{{item.employee_id.name}}</p>
+                               <p class="preview">Software Engineer</p>
+                            </div>
+                        </div> 
+                    </li> 
+                </ul>
+            </div>
+            <div id="bottom-bar">
+                <button id="addcontact" @click="onClickedGroup"><i class="fa fa-user-plus fa-fw" aria-hidden="true" ></i> <span>Create Group</span></button>
+                <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button>
+            </div>
+        </div>
+        <div id="sidepanel" style="border-right: 0.5px solid #99999B;" v-show="!showContact">
+          
+            <div id="profile">
+                <div class="wrap">
+                    <img id="profile-img" src="./images/user.png" class="online" alt="" />
+                    <p style="color:white;font-weight: bold;">{{current_user.name}}</p>
+                    <i class="fa fa-chevron-down expand-button" aria-hidden="true"></i>
+                    <div id="status-options">
+                        <ul>
+                            <li id="status-online" class="active"><span class="status-circle"></span> <p>Online</p></li>
+                            <li id="status-away"><span class="status-circle"></span> <p>Away</p></li>
+                            <li id="status-busy"><span class="status-circle"></span> <p>Busy</p></li>
+                            <li id="status-offline"><span class="status-circle"></span> <p>Offline</p></li>
+                        </ul>
+                    </div>
+                    <div id="expanded">
+                        <label for="twitter"><i class="fa fa-facebook fa-fw" aria-hidden="true"></i></label>
+                        <input name="twitter" type="text" value="mikeross" />
+                        <label for="twitter"><i class="fa fa-twitter fa-fw" aria-hidden="true"></i></label>
+                        <input name="twitter" type="text" value="ross81" />
+                        <label for="twitter"><i class="fa fa-instagram fa-fw" aria-hidden="true"></i></label>
+                        <input name="twitter" type="text" value="mike.ross" />
+                    </div>
+                </div>
+            </div>
+            <div id="search">
+                <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
+                <input type="text" placeholder="Search contacts..." />
+            </div>
+            <div id="contacts">
+                <ul>
+                    <li :key="index" class="contact" v-for="(item,index) in contacts" @click="onClickedContact(item)">
+                        <div class="wrap" v-if="!item.chat_id.is_group">
+                             <img src="./images/user.png" alt="" />
+                            <div class="meta">
+                                <p class="name">{{item.employee_id.name}}</p>
+                               <p class="preview">{{item.chat_id.last_message}}</p>
+                            </div>
+                        </div>
+                        <div class="wrap" v-if="item.chat_id.is_group">
+                            <img src="./images/group.png" alt="" />
+                            <div class="meta">
+                                <p class="name">{{item.chat_id.name}}</p>
+                                <p class="preview">{{item.chat_id.last_message}}</p>
+                            </div>
+                       </div>
+                    </li> 
+                </ul>
+            </div>
+            <div id="bottom-bar">
+                <button id="addcontact" @click="onClickedGroup"><i class="fa fa-user-plus fa-fw" aria-hidden="true" ></i> <span>Create Group</span></button>
+                <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button>
+            </div>
+        </div>
+        <div class="content" v-if="selected_user">
+            <div class="contact-profile">
+                <img src="./images/user.png" alt="" />
+                <p style="color: white;font-weight: bold;">{{selected_user?selected_user.name : null}}</p>
+                
+                <div class="social-media">
+                    <i class="fa fa-facebook" aria-hidden="true"></i>
+                    <i class="fa fa-twitter" aria-hidden="true"></i>
+                     <i class="fa fa-instagram" aria-hidden="true"></i>
+                </div>
+            </div>
+            <div class="messages" id="scroll-to-bottom">
+                <ul>
+                    <li  :class="message.sender_id == this.current_user._id ? 'replies' : 'sent'" v-for="message in messages">
+                        <p>
+                            {{message.message}}<br>
+                            <span style="font-size:10px;float: right;;">{{formatDate(message.createdAt)}}</span>
+
+                        </p> 
+                    </li>
+                    
+                </ul>
+            </div>
+            <div class="message-input">
+                <div class="wrap" style="margin-bottom: 5px;;">
+                    <i class="fa fa-paperclip attachment" aria-hidden="true"></i>
+
+                    <input v-on:keyup.enter="onClickedSend" v-model="message" type="text" placeholder="Write your message..." style="background-color: #2A3A42 ;color:white"/>
+                    <button class="submit" @click="onClickedScoll"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="content" v-else style="background-image:url('./images/Screenshot.png');background-repeat: no-repeat;background-attachment: fixed;background-size: 600px;background-position: 700px 300px;">
+           
+                <!-- <img src="./images/Screenshot.png" alt="" style="width:600px;height:350px;"/> -->
+ 
+        </div>
+    </div>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
+    <script src="./js/socket.io.js"></script>
+    
+    <script>
+        const { createApp } = Vue
+      
+        createApp({
+            data() {
+                return {
+                    showContact: false,
+                    message: 'Hello Vue!',
+                      socket :  io(),
+                    
+                    //   ('http://localhost:3000',{
+                    //       secure: true,
+                    //       rejectUnauthorized: false,
+                    //       rememberUpgrade:true 
+
+
+                    //   })
+                    message : null,
+                    messages : [],
+                    contacts : [],
+                    selected_user : null,
+                    selected_chat_id : null,
+                    current_user : {
+                        _id : null,
+                        name : null
+                    }
+                }
+            },
+            methods : {
+                onClickedGroup(){
+                    this.showContact = true;
+                },
+                formatDate(_date){
+                    return moment(_date).format('hh:mm A')
+                },
+                onClickedScoll(){
+                    let scroll_to_bottom = document.getElementById('scroll-to-bottom');
+                    scroll_to_bottom.scrollTop = scroll_to_bottom.scrollHeight;
+                },
+                onClickedSend(){
+                    let data = {
+                        receiver_id : this.selected_user._id,
+                        sender_id : this.current_user._id,
+                        chat_id : this.selected_chat_id,
+                        message : this.message
+                    }
+
+                    axios.post(`/api/store-conversation`,   data).then(({data}) => {
+                        this.messages.push(data)
+                        
+                        let contactIndex = this.contacts.findIndex(e => e.chat_id._id == this.selected_chat_id)
+                        this.contacts[contactIndex].chat_id.last_message = this.message;
+                        this.message = '';
+                        let that  = this;
+                        setTimeout(function(){
+                                that.onClickedScoll()
+                        },100)
+                     }).catch(error => {
+                        
+                    })
+                },
+                onSocket(chat_id){
+                    let that  = this;
+                    this.socket.on(`some_event`, (message) => { 
+                        if(that.current_user._id != message.sender_id){
+                            this.messages.push(message);
+                            setTimeout(function(){
+                                that.onClickedScoll()
+                            },100)
+                        }
+                    });
+                },
+                onClickedContact(chat){
+                    this.selected_user = chat.employee_id;
+                    this.selected_chat_id = chat.chat_id._id; 
+                    axios.get(`/api/get-conversations`, {
+                        params :{
+                            chat_id:chat.chat_id._id
+                        }
+                    }).then(({data}) => {
+                        this.messages = data.conversations;
+                        
+                        let that = this;
+                       
+                        this.onSocket(chat.chat_id._id)
+                        setTimeout(function(){
+                            that.onClickedScoll()
+                        },100)
+                    }).catch(error => {
+                        
+                    })
+                },
+                loadData(){
+                    const headers = 
+                    {      
+                        "x-access-token": localStorage.getItem('token'),      
+                        "Content-Type": "application/json",      
+                        Accept: "application/json",    
+                    };  
+                    axios.get(`/api/get-participant`, {
+                        headers : headers,
+                        params : {
+                            current_user_id : this.current_user._id
+                        }
+                    }).then(({data}) => {
+                        this.contacts = data.participants;
+                       
+                    }).catch(error => {
+                        // if(error.response.status == 401){
+                        //     // window.location.href = '/login'
+                        // }
+                    })
+                }
+            },
+            mounted(){
+                this.current_user = JSON.parse(localStorage.getItem('user'))
+                this.loadData();
+                console.log(moment())
+                   
+            }
+        }).mount('#frame')
+      </script>
+ </body>
+</html>
