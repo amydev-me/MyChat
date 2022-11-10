@@ -77,17 +77,14 @@ router.post('/api/create-employee' , async (req, res) => {
     }
 })
 
-
-
 router.post('/api/store-conversation', async(req, res) => {
     const reqBody = req.body; 
-
     try{
-
         if(!reqBody.chat_id){
             const newChat= await new Chat({
                 name:'-',
-                is_group :false
+                is_group :false,
+                employees : [reqBody.sender_id, reqBody.receiver_id]
             });
             const _newChat = await newChat.save();
             reqBody.chat_id = _newChat._id;
@@ -116,34 +113,43 @@ router.post('/api/store-conversation', async(req, res) => {
         );
  
         global.io.emit(`some_event`, _newConv); 
-
-        res.send(_newConv)
-    
+        let chat = await Chat.find({
+            "_id" : { $in : reqBody.chat_id } 
+        })
+        .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: reqBody.sender_id}} }) 
+        .populate({ path: 'last_sender', model: Employee }) 
+        // .exec(function (err, data) {
+        //     res.send({
+        //         chat : data ,
+        //         message : _newConv
+        //     })
+        // });
+        res.send({
+            message: _newConv,
+            chats :chat 
+        });
     }catch(e){
         res.status(500).send('Error')
     }
-
 }) 
 
 router.get('/api/get-conversations', async (req, res) => {
     let query = req.query
     let chat_id = query.chat_id;
 
-    let conversations = await Conversation.find({chat_id:chat_id})
+    let conversations = await Conversation.find({ chat_id:chat_id })
     
     res.send({
         conversations
     })
 });
 
-router.get('/api/get-contacts', async(req,res) => {
+router.get('/api/get-employees', async(req,res) => {
     let employees = await Employee.find().exec(function(err, data){
         res.send({
             employees : data
         });
-    })
-
-    
+    }) 
 })
 
 async function getChatID(employee_id){
@@ -155,19 +161,19 @@ async function getChatID(employee_id){
     return collection;
 }
 
-router.get('/api/get-participant', isAuthenticated, async (req, res) => {
+router.get('/api/get-chats', isAuthenticated, async (req, res) => {
     let employee_id = req.query.current_user_id;
     
     let chatIds = await getChatID(employee_id);
      
-    let participants = await Chat.find({
+    let _tmp = await Chat.find({
         "_id" : { $in : chatIds } 
     })
     .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: employee_id}} }) 
     .populate({ path: 'last_sender', model: Employee }) 
     .exec(function (err, data) {
         res.send({
-            participants : data 
+            chats : data 
         })
     }); 
 });
@@ -198,14 +204,18 @@ router.post('/api/create-group', async(req, res) => {
        
         const insertMany =  await  Participant.insertMany(employees) 
 
-       
-        res.send('OK')
-
-
+        let chat = await Chat.find({
+            "_id" : { $in : reqBody.chat_id } 
+        })
+        .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: reqBody.sender_id}} }) 
+        .populate({ path: 'last_sender', model: Employee });
+        res.send({
+            message: _newConv,
+            chats :chat 
+        });
     }catch(e){
         res.status(500).send('Error')
-    }
-
+    } 
 })
 
 module.exports = router;

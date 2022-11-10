@@ -16,11 +16,40 @@
 <body>
 
     <div id="frame">
-        <div id="sidepanel" style="border-right: 0.5px solid #99999B;" v-show="showContact">
+        <div id="sidepanel" style="border-right: 0.5px solid #99999B;" v-show="showContact == 2">
+            <div id="profile">
+                <div class="wrap">
+                    <p>New Chat</p>
+                    <button type="button" class="close" @click="showContact = 0;"> 
+                        <i class="fa fa-times"  style="color: white !important;"></i>
+                    </button>
+                </div>
+            </div> 
+            <div id="contacts" v-show="showContact == 2"> 
+                <ul>
+                    <li :key="index" class="contact" v-for="(item,index) in employees" @click="onClickedEmployee(item)">
+                        
+                        <div class="wrap" >
+                            <img src="./images/user.png"  />
+                            <div class="meta">
+                                <p class="name">{{item.name}}</p>
+                               <p class="preview">Software Engineer</p>
+                            </div>
+                        </div> 
+                    </li> 
+                </ul>
+            </div>
+            <!-- <div id="group-bar" style="margin:0 auto;padding: 0 auto;">
+                <button  id="addcontact" @click="onClickedCreateGroup" ><i class="fa fa-user-plus fa-fw" aria-hidden="true" ></i> <span>Create Group</span></button>
+                <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button> 
+            </div>-->
+        </div>
+        <!--END NEW CHAT-->
+        <div id="sidepanel" style="border-right: 0.5px solid #99999B;" v-show="showContact== 1">
             <div id="profile">
                 <div class="wrap">
                     <p>Add Group participants</p>
-                    <button type="button" class="close" @click="showContact = false;"> 
+                    <button type="button" class="close" @click="showContact = 0;"> 
                         <i class="fa fa-times"  style="color: white !important;"></i>
                     </button>
                 </div>
@@ -30,7 +59,7 @@
                <!-- <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
                 <input type="text" placeholder="Search contacts..." />-->
             </div>
-            <div id="contacts" v-show="showContact"> 
+            <div id="contacts" v-show="showContact == 1"> 
                 <ul>
                     <li :key="index" class="contact" v-for="(item,index) in employees">
                         <input type="checkbox" v-model="item.selected">
@@ -49,7 +78,8 @@
                 <!-- <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button> -->
             </div>
         </div>
-        <div id="sidepanel" style="border-right: 0.5px solid #99999B;" v-show="!showContact">
+        <!--END GROUP NEW CHAT-->
+        <div id="sidepanel" style="border-right: 0.5px solid #99999B;" v-show="showContact == 0">
           
             <div id="profile">
                 <div class="wrap">
@@ -80,11 +110,11 @@
             </div>
             <div id="contacts">
                 <ul>
-                    <li :key="index" class="contact" v-for="(item,index) in contacts" @click="onClickedContact(item)">
+                    <li :key="index" class="contact" v-for="(item,index) in chats" @click="onClickedChat(item)">
                         <div class="wrap" v-if="!item.is_group">
                             <img src="./images/user.png" alt="" />
                             <div class="meta">
-                                <p class="name"> Lai Mon</p>
+                                <p class="name"> {{item.employees?item.employees[0].name:null}}</p>
                                <p class="preview">{{item.last_message}}</p>
                             </div>
                         </div>
@@ -100,10 +130,10 @@
             </div>
             <div id="bottom-bar">
                 <button id="addcontact" @click="onClickedGroupSidebar"><i class="fa fa-users fa-fw" aria-hidden="true" ></i> <span>New Group</span></button>
-                <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button>
+                <button id="settings" @click="showContact = 2"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button>
             </div>
         </div>
-        <div class="content" v-if="selected_chat_id">
+        <div class="content" v-if="selected_chat_id || isNew">
             <div class="contact-profile">
                 <img src="./images/user.png" alt="" />
                 <p style="color: white;font-weight: bold;">{{selected_chat_name}}</p>
@@ -116,7 +146,7 @@
             </div>
             <div class="messages" id="scroll-to-bottom">
                 <ul>
-                    <li  :class="message.sender_id == this.current_user._id ? 'replies' : 'sent'" v-for="message in messages">
+                    <li  :class="message.sender_id == this.current_user._id ? 'replies' : 'sent'" v-for="message in conversations">
                         <p>
                             {{message.message}}<br>
                             <span style="font-size:10px;float: right;;">{{formatDate(message.createdAt)}}</span> 
@@ -134,7 +164,7 @@
                 </div>
             </div>
         </div>
-        <div class="content" v-else style="background-image:url('./images/Screenshot.png');background-repeat: no-repeat;background-attachment: fixed;background-size: 600px;background-position: center;">
+        <div class="content" v-if="!selected_chat_id && !isNew" style="background-image:url('./images/Screenshot.png');background-repeat: no-repeat;background-attachment: fixed;background-size: 600px;background-position: center;">
            
                 <!-- <img src="./images/Screenshot.png" alt="" style="width:600px;height:350px;"/> -->
  
@@ -154,11 +184,13 @@
         createApp({
             data() {
                 return {
+                    isNew : false,
                     group :{
                         name : null,
                         employees : []
                     },
-                    showContact: false,
+                    
+                    showContact: 0,
                     socket :  io(),
                     
                     //   ('http://localhost:3000',{
@@ -169,18 +201,48 @@
 
                     //   })
                     message : null,
-                    messages : [],
-                    contacts : [],
+                    conversations : [],
+                    chats : [],
                     employees:[], 
                     selected_chat_id : null,
                     current_user : {
                         _id : null,
                         name : null
                     },
+                    receiver_id : null,
                     selected_chat_name : null
                 }
             },
             methods : {
+                formatDate(_date){
+                    return moment(_date).format('hh:mm A')
+                },
+                onSocket(chat_id){
+                    let that  = this;
+                    this.socket.on(`some_event`, (message) => { 
+                        if(that.current_user._id != message.sender_id){
+                            this.conversations.push(message);
+                            setTimeout(function(){
+                                that.onClickedScoll()
+                            },100)
+                        }
+                    });
+                },
+                onClickedGroupSidebar(){
+                    this.showContact = 1;
+                },
+                onClickedScoll(){
+                    let scroll_to_bottom = document.getElementById('scroll-to-bottom');
+                    scroll_to_bottom.scrollTop = scroll_to_bottom.scrollHeight;
+                },
+                onClickedEmployee(employee){
+                    this.isNew = true;
+                    this.selected_chat_name = employee.name;
+                    this.receiver_id = employee._id;
+                    this.selected_chat_id = null;
+                    this.conversations = [];
+                    this.showContact = 0;
+                },
                 onClickedCreateGroup(){
                     let empIds = [];
                     this.employees.forEach(e => {
@@ -192,34 +254,21 @@
                     axios.post(`/api/create-group`, {
                         name : this.group.name,
                         employees : empIds
-                    }).then(({data}) => {
-                         
-                    }).catch(error => { 
-
-                    })
-                },
-                onClickedGroupSidebar(){
-                    this.showContact = true;
-                },
-                formatDate(_date){
-                    return moment(_date).format('hh:mm A')
-                },
-                onClickedScoll(){
-                    let scroll_to_bottom = document.getElementById('scroll-to-bottom');
-                    scroll_to_bottom.scrollTop = scroll_to_bottom.scrollHeight;
+                    }).then(({data}) => { }).catch(error => {})
                 },
                 onClickedSend(){
                     let data = { 
                         sender_id : this.current_user._id,
+                        receiver_id : this.receiver_id,
                         chat_id : this.selected_chat_id,
                         message : this.message
                     }
 
-                    axios.post(`/api/store-conversation`,   data).then(({data}) => {
-                        this.messages.push(data)
-                        
-                        let contactIndex = this.contacts.findIndex(e => e.chat_id._id == this.selected_chat_id)
-                        this.contacts[contactIndex].chat_id.last_message = this.message;
+                    axios.post(`/api/store-conversation`, data).then(({data}) => {
+                        this.conversations.push(data.message);
+                        this.chats.unshift(data.chats[0])
+                        let contactIndex = this.chats.findIndex(e => e.chat_id._id == this.selected_chat_id)
+                        this.chats[contactIndex].chat_id.last_message = this.message;
                         this.message = '';
                         let that  = this;
                         setTimeout(function(){
@@ -229,18 +278,7 @@
                         
                     })
                 },
-                onSocket(chat_id){
-                    let that  = this;
-                    this.socket.on(`some_event`, (message) => { 
-                        if(that.current_user._id != message.sender_id){
-                            this.messages.push(message);
-                            setTimeout(function(){
-                                that.onClickedScoll()
-                            },100)
-                        }
-                    });
-                },
-                onClickedContact(chat){
+                onClickedChat(chat){
                     this.selected_chat_name = chat.is_group? chat.name : chat.employees[0].name;
                     this.selected_chat_id = chat._id; 
                     axios.get(`/api/get-conversations`, {
@@ -248,33 +286,38 @@
                             chat_id:chat._id
                         }
                     }).then(({data}) => {
-                        this.messages = data.conversations;
-                        
+                        this.conversations = data.conversations; 
                         let that = this;
                        
                         this.onSocket(chat._id)
-                        // setTimeout(function(){
-                        //     that.onClickedScoll()
-                        // },100)
+                        setTimeout(function(){
+                            that.onClickedScoll()
+                        },100)
                     }).catch(error => {
                         
                     })
                 },
-                loadData(){
-                    const headers = 
-                    {      
-                        "x-access-token": localStorage.getItem('token'),      
-                        "Content-Type": "application/json",      
-                        Accept: "application/json",    
-                    };  
-                    axios.get(`/api/get-participant`, {
-                        headers : headers,
+                getEmployees(){
+                    axios.get(`/api/get-employees`, { headers : this.getHeaders() }).then(({data}) => {
+                        let _emps = data.employees;
+                        _emps.map(e => {
+                            e.selected = false;
+                        });
+                        this.employees = _emps;
+
+                    }).catch(error => {
+                        // if(error.response.status == 401){
+                        //     // window.location.href = '/login'
+                        // }
+                    })
+                },
+                loadData(){ 
+                    axios.get(`/api/get-chats`, {  headers : this.getHeaders(),
                         params : {
                             current_user_id : this.current_user._id
                         }
                     }).then(({data}) => {
-                        this.contacts = data.participants;
-                       
+                        this.chats = data.chats;
                     }).catch(error => {
                        
                         if(error.response.status == 401){
@@ -283,28 +326,12 @@
                         }
                     })
                 },
-                getEmployees(){
-                    const headers = 
-                    {      
+                getHeaders(){
+                    return {      
                         "x-access-token": localStorage.getItem('token'),      
                         "Content-Type": "application/json",      
-                        Accept: "application/json",    
-                    };  
-                    axios.get(`/api/get-contacts`, {
-                        headers : headers 
-                    }).then(({data}) => {
-                        let _emps = data.employees;
-                        _emps.map(e => 
-                            {
-                                e.selected = false;
-                            }
-                        );
-                        this.employees = _emps;
-                    }).catch(error => {
-                        // if(error.response.status == 401){
-                        //     // window.location.href = '/login'
-                        // }
-                    })
+                        "Accept": "application/json",    
+                    }; 
                 }
             },
             mounted(){
