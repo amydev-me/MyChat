@@ -14,16 +14,20 @@ const ChatSchecma=new mongoose.Schema({
         type : String,
         required: false
     },
+    last_sender : {
+        type: Schema.Types.ObjectId, 
+        ref: "Employee",
+    },
     conversations: [
         {
             type: Schema.Types.ObjectId,
             ref: "Conversation"
         }
-    ],
-    details: [
+    ], 
+    employees:[
         {
             type: Schema.Types.ObjectId,
-            ref: "Participant"
+            ref: "Employee"
         }
     ]
 },{ timestamps: true });

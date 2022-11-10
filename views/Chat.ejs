@@ -81,18 +81,18 @@
             <div id="contacts">
                 <ul>
                     <li :key="index" class="contact" v-for="(item,index) in contacts" @click="onClickedContact(item)">
-                        <div class="wrap" v-if="!item.chat_id.is_group">
-                             <img src="./images/user.png" alt="" />
+                        <div class="wrap" v-if="!item.is_group">
+                            <img src="./images/user.png" alt="" />
                             <div class="meta">
-                                <p class="name">{{item.employee_id.name}}</p>
-                               <p class="preview">{{item.chat_id.last_message}}</p>
+                                <p class="name"> Lai Mon</p>
+                               <p class="preview">{{item.last_message}}</p>
                             </div>
                         </div>
-                        <div class="wrap" v-if="item.chat_id.is_group">
+                        <div class="wrap" v-if="item.is_group">
                             <img src="./images/group.png" alt="" />
                             <div class="meta">
-                                <p class="name">{{item.chat_id.name}}</p>
-                                <p class="preview">{{item.chat_id.last_message}}</p>
+                                <p class="name">{{item.name}}</p>
+                                <p class="preview"><span>{{item.last_sender?item.last_sender.name:null}} : </span></span>{{item.last_message}}</p>
                             </div>
                        </div>
                     </li> 
@@ -103,10 +103,10 @@
                 <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button>
             </div>
         </div>
-        <div class="content" v-if="selected_user">
+        <div class="content" v-if="selected_chat_id">
             <div class="contact-profile">
                 <img src="./images/user.png" alt="" />
-                <p style="color: white;font-weight: bold;">{{selected_user?selected_user.name : null}}</p>
+                <p style="color: white;font-weight: bold;">{{selected_chat_name}}</p>
                 
                 <div class="social-media">
                     <i class="fa fa-facebook" aria-hidden="true"></i>
@@ -119,8 +119,7 @@
                     <li  :class="message.sender_id == this.current_user._id ? 'replies' : 'sent'" v-for="message in messages">
                         <p>
                             {{message.message}}<br>
-                            <span style="font-size:10px;float: right;;">{{formatDate(message.createdAt)}}</span>
-
+                            <span style="font-size:10px;float: right;;">{{formatDate(message.createdAt)}}</span> 
                         </p> 
                     </li>
                     
@@ -172,13 +171,13 @@
                     message : null,
                     messages : [],
                     contacts : [],
-                    employees:[],
-                    selected_user : null,
+                    employees:[], 
                     selected_chat_id : null,
                     current_user : {
                         _id : null,
                         name : null
-                    }
+                    },
+                    selected_chat_name : null
                 }
             },
             methods : {
@@ -210,8 +209,7 @@
                     scroll_to_bottom.scrollTop = scroll_to_bottom.scrollHeight;
                 },
                 onClickedSend(){
-                    let data = {
-                        receiver_id : this.selected_user._id,
+                    let data = { 
                         sender_id : this.current_user._id,
                         chat_id : this.selected_chat_id,
                         message : this.message
@@ -243,21 +241,21 @@
                     });
                 },
                 onClickedContact(chat){
-                    this.selected_user = chat.employee_id;
-                    this.selected_chat_id = chat.chat_id._id; 
+                    this.selected_chat_name = chat.is_group? chat.name : chat.employees[0].name;
+                    this.selected_chat_id = chat._id; 
                     axios.get(`/api/get-conversations`, {
                         params :{
-                            chat_id:chat.chat_id._id
+                            chat_id:chat._id
                         }
                     }).then(({data}) => {
                         this.messages = data.conversations;
                         
                         let that = this;
                        
-                        this.onSocket(chat.chat_id._id)
-                        setTimeout(function(){
-                            that.onClickedScoll()
-                        },100)
+                        this.onSocket(chat._id)
+                        // setTimeout(function(){
+                        //     that.onClickedScoll()
+                        // },100)
                     }).catch(error => {
                         
                     })

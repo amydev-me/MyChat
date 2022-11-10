@@ -10,10 +10,6 @@ const ConversationSchema=new mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: "Employee",
     },
-    receiver_id: {
-        type: Schema.Types.ObjectId,
-        ref: "Employee",
-    },
     message:{
         type: String,
         required: true

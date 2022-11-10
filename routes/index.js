@@ -111,6 +111,7 @@ router.post('/api/store-conversation', async(req, res) => {
             {'_id' : mongoose.Types.ObjectId(reqBody.chat_id)},
             { 
                 last_message : reqBody.message,
+                last_sender : reqBody.sender_id,
                 $push: { conversations: mongoose.Types.ObjectId(_newConv._id) } }
         );
  
@@ -122,17 +123,7 @@ router.post('/api/store-conversation', async(req, res) => {
         res.status(500).send('Error')
     }
 
-})
-
-async function getChatID(employee_id){
-    let schedules = await Participant.find({employee_id : employee_id});
-    let collection = [];
-    schedules.forEach(e => {
-        collection.push(e.chat_id);
-    })
-    return collection;
-}
-
+}) 
 
 router.get('/api/get-conversations', async (req, res) => {
     let query = req.query
@@ -155,21 +146,28 @@ router.get('/api/get-contacts', async(req,res) => {
     
 })
 
+async function getChatID(employee_id){
+    let schedules = await Participant.find({employee_id : employee_id});
+    let collection = [];
+    schedules.forEach(e => {
+        collection.push(e.chat_id);
+    })
+    return collection;
+}
+
 router.get('/api/get-participant', isAuthenticated, async (req, res) => {
     let employee_id = req.query.current_user_id;
     
     let chatIds = await getChatID(employee_id);
-    
-    let participants = await Participant.find({
-        "chat_id" : { $in : chatIds },
-        "employee_id" : { $ne : employee_id}
+     
+    let participants = await Chat.find({
+        "_id" : { $in : chatIds } 
     })
-    .populate({ path: 'employee_id', model: Employee })
-    .populate({path:'chat_id', model: Chat})
+    .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: employee_id}} }) 
+    .populate({ path: 'last_sender', model: Employee }) 
     .exec(function (err, data) {
         res.send({
-            participants : data
-            
+            participants : data 
         })
     }); 
 });
@@ -191,14 +189,16 @@ router.post('/api/create-group', async(req, res) => {
     try{ 
         const newChat= await new Chat({
             name:reqBody.name,
-            is_group :true
+            is_group :true,
+            employees : reqBody.employees
         });
         const _newChat = await newChat.save();
         reqBody.chat_id = _newChat._id;
         let employees =  await getEmployees(reqBody.employees, _newChat._id)
        
         const insertMany =  await  Participant.insertMany(employees) 
-        
+
+       
         res.send('OK')
 
 
