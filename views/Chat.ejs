@@ -122,7 +122,9 @@
                             <img src="./images/group.png" alt="" />
                             <div class="meta">
                                 <p class="name">{{item.name}}</p>
-                                <p class="preview"><span>{{item.last_sender?item.last_sender.name:null}} : </span></span>{{item.last_message}}</p>
+                                <p class="preview" v-if="item.last_message"><span>{{item.last_sender?item.last_sender.name:null}} : </span></span>{{item.last_message}}</p>
+                                <p class="preview" v-if="!item.last_message">Created New Group</p>
+
                             </div>
                        </div>
                     </li> 
@@ -219,7 +221,7 @@
                 },
                 onSocket(chat_id){
                     let that  = this;
-                    this.socket.on(`some_event`, (message) => { 
+                    this.socket.on(`chat-id-${chat_id}`, (message) => { 
                         if(that.current_user._id != message.sender_id){
                             this.conversations.push(message);
                             setTimeout(function(){
@@ -242,6 +244,7 @@
                     this.selected_chat_id = null;
                     this.conversations = [];
                     this.showContact = 0;
+                    
                 },
                 onClickedCreateGroup(){
                     let empIds = [];
@@ -254,29 +257,43 @@
                     axios.post(`/api/create-group`, {
                         name : this.group.name,
                         employees : empIds
-                    }).then(({data}) => { }).catch(error => {})
+                    }, { headers : this.getHeaders()}).then(({data}) => { 
+                        this.chats.unshift(data.chats[0])
+                        this.isNew = 0;
+                        this.group.name = null;
+                        this.group.employees = [];
+                        this.selected_chat_id = data.chats[0].id
+                        this.onSocket(data.chats[0]._id)
+                    }).catch(error => {
+
+                    })
                 },
                 onClickedSend(){
-                    let data = { 
-                        sender_id : this.current_user._id,
+                    let data = {  
                         receiver_id : this.receiver_id,
                         chat_id : this.selected_chat_id,
                         message : this.message
                     }
 
-                    axios.post(`/api/store-conversation`, data).then(({data}) => {
+                    axios.post(`/api/store-conversation`, data, { headers : this.getHeaders()}).then(({data}) => {
                         this.conversations.push(data.message);
-                        this.chats.unshift(data.chats[0])
-                        let contactIndex = this.chats.findIndex(e => e.chat_id._id == this.selected_chat_id)
-                        this.chats[contactIndex].chat_id.last_message = this.message;
+                        let _tmpChat = this.chats.find(e => e._id == data.chats[0]._id)
+                        if(!_tmpChat){
+                            this.selected_chat_id = data.chats[0]._id;
+                            this.chats.unshift(data.chats[0])
+                            this.onSocket(data.chats[0]._id)
+                        }
+                        let contactIndex = this.chats.findIndex(e => e._id == data.chats[0]._id)
+                        this.chats[contactIndex].last_message = this.message;
                         this.message = '';
                         let that  = this;
                         setTimeout(function(){
                                 that.onClickedScoll()
                         },100)
-                    }).catch(error => {
-                        
                     })
+                    // .catch(error => {
+                        
+                    // })
                 },
                 onClickedChat(chat){
                     this.selected_chat_name = chat.is_group? chat.name : chat.employees[0].name;
@@ -298,7 +315,7 @@
                     })
                 },
                 getEmployees(){
-                    axios.get(`/api/get-employees`, { headers : this.getHeaders() }).then(({data}) => {
+                    axios.get(`/api/get-employees`, { headers : this.getHeaders()}).then(({data}) => {
                         let _emps = data.employees;
                         _emps.map(e => {
                             e.selected = false;
@@ -306,17 +323,13 @@
                         this.employees = _emps;
 
                     }).catch(error => {
-                        // if(error.response.status == 401){
-                        //     // window.location.href = '/login'
-                        // }
+                        if(error.response.status == 401){
+                            // window.location.href = '/login'
+                        }
                     })
                 },
                 loadData(){ 
-                    axios.get(`/api/get-chats`, {  headers : this.getHeaders(),
-                        params : {
-                            current_user_id : this.current_user._id
-                        }
-                    }).then(({data}) => {
+                    axios.get(`/api/get-chats`, {  headers : this.getHeaders()}).then(({data}) => {
                         this.chats = data.chats;
                     }).catch(error => {
                        

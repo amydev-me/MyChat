@@ -15,7 +15,7 @@ const isAuthenticated = async (req,res,next)=>{
             return res.status(401).send("Invalid Token");
         }
         const decoded = await jwt.verify(token,process.env.SECRET_KEY);
-        // req.user = await userModel.findById(verify.id);
+        // let user = await userModel.findById(decoded.user_id);
         req.user = decoded;
     } catch (error) {
         return res.status(401).send("Invalid Token");

@@ -77,14 +77,16 @@ router.post('/api/create-employee' , async (req, res) => {
     }
 })
 
-router.post('/api/store-conversation', async(req, res) => {
+router.post('/api/store-conversation', isAuthenticated, async(req, res) => {
     const reqBody = req.body; 
+    reqBody.sender_id = req.user.user_id;
+    // reqBody.sender_id = employee_id;
     try{
         if(!reqBody.chat_id){
             const newChat= await new Chat({
                 name:'-',
                 is_group :false,
-                employees : [reqBody.sender_id, reqBody.receiver_id]
+                employees : [ reqBody.sender_id, reqBody.receiver_id]
             });
             const _newChat = await newChat.save();
             reqBody.chat_id = _newChat._id;
@@ -92,7 +94,7 @@ router.post('/api/store-conversation', async(req, res) => {
             const insertMany =  await  Participant.insertMany([
                 {
                     chat_id : mongoose.Types.ObjectId(reqBody.chat_id),
-                    employee_id : mongoose.Types.ObjectId(reqBody.sender_id)
+                    employee_id : mongoose.Types.ObjectId( reqBody.sender_id)
                 },
                 {
                     chat_id : mongoose.Types.ObjectId(reqBody.chat_id),
@@ -108,15 +110,14 @@ router.post('/api/store-conversation', async(req, res) => {
             {'_id' : mongoose.Types.ObjectId(reqBody.chat_id)},
             { 
                 last_message : reqBody.message,
-                last_sender : reqBody.sender_id,
+                last_sender :  reqBody.sender_id,
                 $push: { conversations: mongoose.Types.ObjectId(_newConv._id) } }
         );
  
-        global.io.emit(`some_event`, _newConv); 
         let chat = await Chat.find({
             "_id" : { $in : reqBody.chat_id } 
         })
-        .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: reqBody.sender_id}} }) 
+        .populate({ path: 'employees', model: Employee,  match: { _id: {$ne:  reqBody.sender_id}} }) 
         .populate({ path: 'last_sender', model: Employee }) 
         // .exec(function (err, data) {
         //     res.send({
@@ -124,6 +125,9 @@ router.post('/api/store-conversation', async(req, res) => {
         //         message : _newConv
         //     })
         // });
+        global.io.emit(`chat-id-${reqBody.chat_id}`, _newConv); 
+
+
         res.send({
             message: _newConv,
             chats :chat 
@@ -144,8 +148,9 @@ router.get('/api/get-conversations', async (req, res) => {
     })
 });
 
-router.get('/api/get-employees', async(req,res) => {
-    let employees = await Employee.find().exec(function(err, data){
+router.get('/api/get-employees', isAuthenticated, async(req,res) => {
+     let employee_id = req.user.user_id;
+    let employees = await Employee.find({_id : {$ne:employee_id}}).exec(function(err, data){
         res.send({
             employees : data
         });
@@ -162,7 +167,7 @@ async function getChatID(employee_id){
 }
 
 router.get('/api/get-chats', isAuthenticated, async (req, res) => {
-    let employee_id = req.query.current_user_id;
+    let employee_id = req.user.user_id;
     
     let chatIds = await getChatID(employee_id);
      
@@ -189,9 +194,9 @@ function getEmployees(employees, chat_id){
     return _employees;
 }
 
-router.post('/api/create-group', async(req, res) => {
+router.post('/api/create-group',isAuthenticated, async(req, res) => {
     const reqBody = req.body; 
-    
+    reqBody.employees.push(req.user.user_id)
     try{ 
         const newChat= await new Chat({
             name:reqBody.name,
@@ -207,14 +212,14 @@ router.post('/api/create-group', async(req, res) => {
         let chat = await Chat.find({
             "_id" : { $in : reqBody.chat_id } 
         })
-        .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: reqBody.sender_id}} }) 
+        .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: req.user.user_id }} }) 
         .populate({ path: 'last_sender', model: Employee });
         res.send({
-            message: _newConv,
+          
             chats :chat 
         });
     }catch(e){
-        res.status(500).send('Error')
+        res.status(200).send('Error')
     } 
 })
 
