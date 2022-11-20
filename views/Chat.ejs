@@ -186,6 +186,7 @@
         createApp({
             data() {
                 return {
+                    socket :  io(),
                     isNew : false,
                     group :{
                         name : null,
@@ -193,7 +194,9 @@
                     },
                     
                     showContact: 0,
-                    socket :  io(),
+                   
+
+
                     
                     //   ('http://localhost:3000',{
                     //       secure: true,
@@ -339,6 +342,15 @@
                         }
                     })
                 },
+                whoAmI(){
+                    axios.get(`/api/whoami`, {  headers : this.getHeaders()}).then(({data}) => {
+                        this.current_user = data;
+                    }).catch(error => {
+                        if(error.response.status == 401){
+                            window.location.href = '/login'
+                        }
+                    })
+                },
                 getHeaders(){
                     return {      
                         "x-access-token": localStorage.getItem('token'),      
@@ -348,7 +360,8 @@
                 }
             },
             mounted(){
-                this.current_user = JSON.parse(localStorage.getItem('user'))
+                // this.current_user = JSON.parse(localStorage.getItem('user'))
+                this.whoAmI();
                 this.getEmployees();
                 this.loadData(); 
                    

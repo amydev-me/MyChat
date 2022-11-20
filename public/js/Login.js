@@ -19,7 +19,7 @@ function onClickedSignIn(event){
         password : document.getElementById('inputPassword').value
     }
      axios.post(`/api/login`, credentials).then(({data}) => {
-        localStorage.setItem('user', JSON.stringify(data.user))
+        // localStorage.setItem('user', JSON.stringify(data.user))
         localStorage.setItem('token', data.token)
         window.location.href = '/';
         

@@ -1,13 +1,12 @@
 const router = require('express').Router();
 const Employee = require('../Model/Employee'); 
 const mongoose=require('mongoose');
-// const isAuth = require('../middleware/auth').isAuth;
 const bcrypt = require('bcrypt')
-// const passport = require('passport')
 const Chat = require('../Model/Chat');
 const Conversation = require('../Model/Conversation');
 const Participant = require('../Model/Participant');
 const jwt = require('jsonwebtoken');
+
 const isAuthenticated = require('../middleware/auth');
 
  
@@ -19,8 +18,12 @@ router.get('/login' ,(req, res) => {
     res.render('Login')
 });
 
+router.get("/api/whoami", isAuthenticated, async(req, res) => {
+    let user = await Employee.findById(req.user.user_id);
+    res.send(user)
+});
+
 router.post("/api/login", async(req, res) => {
-     // Our login logic starts here
     try {
         // Get user input
         const { email, password } = req.body;
@@ -38,9 +41,7 @@ router.post("/api/login", async(req, res) => {
                 { user_id: user._id, email }, process.env.TOKEN_KEY,{ expiresIn: "2h"}
             ); 
     
-            //   res.status(200).json(token);
             return res.header("x-access-token", token).send({
-                user,
                 token
             });
         }
@@ -56,7 +57,7 @@ router.get('/logout', (req, res, next) => {
     res.redirect('/login');
 })
 
-router.post('/api/create-employee' , async (req, res) => {
+router.post('/api/create-employee' ,isAuthenticated, async (req, res) => {
     try{
         const staff = req.body;    
         const salt = bcrypt.genSaltSync(15);
@@ -119,12 +120,7 @@ router.post('/api/store-conversation', isAuthenticated, async(req, res) => {
         })
         .populate({ path: 'employees', model: Employee,  match: { _id: {$ne:  reqBody.sender_id}} }) 
         .populate({ path: 'last_sender', model: Employee }) 
-        // .exec(function (err, data) {
-        //     res.send({
-        //         chat : data ,
-        //         message : _newConv
-        //     })
-        // });
+   
         global.io.emit(`chat-id-${reqBody.chat_id}`, _newConv); 
 
 
@@ -137,7 +133,7 @@ router.post('/api/store-conversation', isAuthenticated, async(req, res) => {
     }
 }) 
 
-router.get('/api/get-conversations', async (req, res) => {
+router.get('/api/get-conversations',isAuthenticated, async (req, res) => {
     let query = req.query
     let chat_id = query.chat_id;
 
