@@ -133,7 +133,7 @@ router.post('/api/store-conversation', isAuthenticated, async(req, res) => {
     }
 }) 
 
-router.get('/api/get-conversations',isAuthenticated, async (req, res) => {
+router.get('/api/get-conversations', async (req, res) => {
     let query = req.query
     let chat_id = query.chat_id;
 
@@ -211,7 +211,6 @@ router.post('/api/create-group',isAuthenticated, async(req, res) => {
         .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: req.user.user_id }} }) 
         .populate({ path: 'last_sender', model: Employee });
         res.send({
-          
             chats :chat 
         });
     }catch(e){

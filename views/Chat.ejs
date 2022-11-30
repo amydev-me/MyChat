@@ -131,8 +131,9 @@
                 </ul>
             </div>
             <div id="bottom-bar">
+                <button id="settings" @click="showContact = 2"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>New Chat</span></button>
+
                 <button id="addcontact" @click="onClickedGroupSidebar"><i class="fa fa-users fa-fw" aria-hidden="true" ></i> <span>New Group</span></button>
-                <button id="settings" @click="showContact = 2"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button>
             </div>
         </div>
         <div class="content" v-if="selected_chat_id || isNew">
@@ -154,7 +155,6 @@
                             <span style="font-size:10px;float: right;;">{{formatDate(message.createdAt)}}</span> 
                         </p> 
                     </li>
-                    
                 </ul>
             </div>
             <div class="message-input">
@@ -168,8 +168,7 @@
         </div>
         <div class="content" v-if="!selected_chat_id && !isNew" style="background-image:url('./images/Screenshot.png');background-repeat: no-repeat;background-attachment: fixed;background-size: 600px;background-position: center;">
            
-                <!-- <img src="./images/Screenshot.png" alt="" style="width:600px;height:350px;"/> -->
- 
+  
         </div>
     </div>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
@@ -294,9 +293,6 @@
                                 that.onClickedScoll()
                         },100)
                     })
-                    // .catch(error => {
-                        
-                    // })
                 },
                 onClickedChat(chat){
                     this.selected_chat_name = chat.is_group? chat.name : chat.employees[0].name;
