@@ -19,16 +19,22 @@
         <div id="rightsidepanel" style="border-left: 0.5px solid #99999B;" v-show="showGroup ">
             <div id="profile">
                 <div class="wrap">
-                    <p>New Chat</p>
-                    <button type="button" class="close" @click="showGroup = false;"> 
+                    <button type="button" class="close" @click="showGroup = false;" style="float:left"> 
                         <i class="fa fa-times"  style="color: white !important;"></i>
                     </button>
+                    <p style="margin-top:-20px">Group Info</p>
                 </div>
             </div> 
-            <div id="contacts" v-show="showContact == 2"> 
+            <div id="profile">
+                <div   style="text-align: center;;" >
+                    <img id="profile-img" src="./images/user.png" class="online" alt="" style="display:block; margin:auto !important;" width="100"/>
+                    <p style="display:block; margin:auto !important;margin-top:5px;font-size:28px;">{{selected_chat_name}}</p>
+                </div>
+            </div>
+
+            <div id="contacts">
                 <ul>
                     <li :key="index" class="contact" v-for="(item,index) in employees" @click="onClickedEmployee(item)">
-                        
                         <div class="wrap" >
                             <img src="./images/user.png"  />
                             <div class="meta">
@@ -239,7 +245,8 @@
                     },
                     receiver_id : null,
                     selected_chat_name : null,
-                    showGroup : true
+                    showGroup : false,
+                    selected_chat_participants : []
                 }
             },
             methods : {
