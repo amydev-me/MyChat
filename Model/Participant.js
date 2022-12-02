@@ -10,6 +10,10 @@ const ParticipantsSchema=new mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: "Employee",
     },
+    unread_count : {
+        type : Number,
+        required: false
+    }
 });
 
 module.exports=new mongoose.model("participant", ParticipantsSchema);

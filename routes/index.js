@@ -170,6 +170,7 @@ router.get('/api/get-chats', isAuthenticated, async (req, res) => {
     let _tmp = await Chat.find({
         "_id" : { $in : chatIds } 
     })
+    .sort({updatedAt: -1})
     .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: employee_id}} }) 
     .populate({ path: 'last_sender', model: Employee }) 
     .exec(function (err, data) {
@@ -210,6 +211,13 @@ router.post('/api/create-group',isAuthenticated, async(req, res) => {
         })
         .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: req.user.user_id }} }) 
         .populate({ path: 'last_sender', model: Employee });
+
+        reqBody.employees.forEach(user_id => {
+            if(user_id !== req.user.user_id){
+                global.io.emit(`new-group-noti-${user_id}`, chat); 
+            }
+        })
+
         res.send({
             chats :chat 
         });

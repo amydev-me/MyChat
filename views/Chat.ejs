@@ -11,11 +11,37 @@
     <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
      <link rel="stylesheet" href="./css/chat.css">
     
-
+     <link rel="stylesheet" href="./css/right.css">
  </head>
 <body>
 
     <div id="frame">
+        <div id="rightsidepanel" style="border-left: 0.5px solid #99999B;" v-show="showGroup ">
+            <div id="profile">
+                <div class="wrap">
+                    <p>New Chat</p>
+                    <button type="button" class="close" @click="showGroup = false;"> 
+                        <i class="fa fa-times"  style="color: white !important;"></i>
+                    </button>
+                </div>
+            </div> 
+            <div id="contacts" v-show="showContact == 2"> 
+                <ul>
+                    <li :key="index" class="contact" v-for="(item,index) in employees" @click="onClickedEmployee(item)">
+                        
+                        <div class="wrap" >
+                            <img src="./images/user.png"  />
+                            <div class="meta">
+                                <p class="name">{{item.name}}</p>
+                               <p class="preview">Software Engineer</p>
+                            </div>
+                        </div> 
+                    </li> 
+                </ul>
+            </div>
+        </div>
+        <!--END GROUP NEW CHAT-->
+
         <div id="sidepanel" style="border-right: 0.5px solid #99999B;" v-show="showContact == 2">
             <div id="profile">
                 <div class="wrap">
@@ -123,7 +149,7 @@
                             <div class="meta">
                                 <p class="name">{{item.name}}</p>
                                 <p class="preview" v-if="item.last_message"><span>{{item.last_sender?item.last_sender.name:null}} : </span></span>{{item.last_message}}</p>
-                                <p class="preview" v-if="!item.last_message">Created New Group</p>
+                                <p class="preview" v-if="!item.last_message">Created New Group by </p>
 
                             </div>
                        </div>
@@ -137,7 +163,7 @@
             </div>
         </div>
         <div class="content" v-if="selected_chat_id || isNew">
-            <div class="contact-profile">
+            <div class="contact-profile" @click="onClickedShowGroupInfo">
                 <img src="./images/user.png" alt="" />
                 <p style="color: white;font-weight: bold;">{{selected_chat_name}}</p>
                 
@@ -166,9 +192,7 @@
                 </div>
             </div>
         </div>
-        <div class="content" v-if="!selected_chat_id && !isNew" style="background-image:url('./images/Screenshot.png');background-repeat: no-repeat;background-attachment: fixed;background-size: 600px;background-position: center;">
-           
-  
+        <div class="content" v-if="!selected_chat_id && !isNew" style="background-image:url('./images/Screenshot.png');background-repeat: no-repeat;background-attachment: fixed;background-size: 600px;background-position: center;"> 
         </div>
     </div>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
@@ -214,17 +238,21 @@
                         name : null
                     },
                     receiver_id : null,
-                    selected_chat_name : null
+                    selected_chat_name : null,
+                    showGroup : true
                 }
             },
             methods : {
+                onClickedShowGroupInfo(){
+                    this.showGroup = true
+                },
                 formatDate(_date){
                     return moment(_date).format('hh:mm A')
                 },
                 onSocket(chat_id){
                     let that  = this;
-                    this.socket.on(`chat-id-${chat_id}`, (message) => { 
-                        if(that.current_user._id != message.sender_id){
+                    this.socket.on(`chat-id-${chat_id}`, (message) => {  
+                        if(that.current_user._id != message.sender_id){ 
                             this.conversations.push(message);
                             setTimeout(function(){
                                 that.onClickedScoll()
@@ -260,12 +288,11 @@
                         name : this.group.name,
                         employees : empIds
                     }, { headers : this.getHeaders()}).then(({data}) => { 
-                        this.chats.unshift(data.chats[0])
-                        this.isNew = 0;
-                        this.group.name = null;
-                        this.group.employees = [];
-                        this.selected_chat_id = data.chats[0].id
-                        this.onSocket(data.chats[0]._id)
+                        this.chats.unshift(data.chats[0]) 
+                        this.selected_chat_name = data.chats[0].name; 
+                        this.selected_chat_id = data.chats[0]._id;
+                        this.showContact = 0;
+                        this.group.employees = []; 
                     }).catch(error => {
 
                     })
@@ -286,7 +313,7 @@
                             this.onSocket(data.chats[0]._id)
                         }
                         let contactIndex = this.chats.findIndex(e => e._id == data.chats[0]._id)
-                        this.chats[contactIndex].last_message = this.message;
+                        // this.chats[contactIndex].last_message = this.message;
                         this.message = '';
                         let that  = this;
                         setTimeout(function(){
@@ -338,9 +365,16 @@
                         }
                     })
                 },
+                listeningNewGroup(){
+                    let that  = this;
+                    this.socket.on(`new-group-noti-${this.current_user._id}`, (chats) => { 
+                        that.chats.unshift(chats[0])
+                    });
+                },
                 whoAmI(){
                     axios.get(`/api/whoami`, {  headers : this.getHeaders()}).then(({data}) => {
                         this.current_user = data;
+                        this.listeningNewGroup();
                     }).catch(error => {
                         if(error.response.status == 401){
                             window.location.href = '/login'

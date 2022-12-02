@@ -494,8 +494,7 @@ body {
     }
   }
   #frame .content {
-    float: right;
-    width: 60%;
+    width: auto !important;
     height: 100%;
     overflow: hidden;
     position: relative;
