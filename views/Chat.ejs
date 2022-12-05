@@ -34,7 +34,7 @@
 
             <div id="contacts">
                 <ul>
-                    <li :key="index" class="contact" v-for="(item,index) in employees" @click="onClickedEmployee(item)">
+                    <li :key="index" class="contact" v-for="(item,index) in selected_chat_participants">
                         <div class="wrap" >
                             <img src="./images/user.png"  />
                             <div class="meta">
@@ -106,11 +106,12 @@
                 </ul>
             </div>
             <div id="group-bar" style="margin:0 auto;padding: 0 auto;">
-                <button  id="addcontact" @click="onClickedCreateGroup" ><i class="fa fa-user-plus fa-fw" aria-hidden="true" ></i> <span>Create Group</span></button>
+                <button  id="addcontact" @click="onClickedCreateGroup" ><i class="fa fa-user-plus fa-fw" aria-hidden="true" v-if="group.name" ></i> <span>Create Group</span></button>
                 <!-- <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button> -->
             </div>
         </div>
         <!--END GROUP NEW CHAT-->
+
         <div id="sidepanel" style="border-right: 0.5px solid #99999B;" v-show="showContact == 0">
           
             <div id="profile">
@@ -155,7 +156,7 @@
                             <div class="meta">
                                 <p class="name">{{item.name}}</p>
                                 <p class="preview" v-if="item.last_message"><span>{{item.last_sender?item.last_sender.name:null}} : </span></span>{{item.last_message}}</p>
-                                <p class="preview" v-if="!item.last_message">Created New Group by </p>
+                                <p class="preview" v-if="!item.last_message">Created New Group by : {{item.createdBy?item.createdBy.name:null}}</p>
 
                             </div>
                        </div>
@@ -168,6 +169,9 @@
                 <button id="addcontact" @click="onClickedGroupSidebar"><i class="fa fa-users fa-fw" aria-hidden="true" ></i> <span>New Group</span></button>
             </div>
         </div>
+          <!--END Left Sidebar-->
+
+
         <div class="content" v-if="selected_chat_id || isNew">
             <div class="contact-profile" @click="onClickedShowGroupInfo">
                 <img src="./images/user.png" alt="" />
@@ -176,13 +180,14 @@
                 <div class="social-media">
                     <i class="fa fa-facebook" aria-hidden="true"></i>
                     <i class="fa fa-twitter" aria-hidden="true"></i>
-                     <i class="fa fa-instagram" aria-hidden="true"></i>
+                    <i class="fa fa-instagram" aria-hidden="true"></i>
                 </div>
             </div>
             <div class="messages" id="scroll-to-bottom">
                 <ul>
-                    <li  :class="message.sender_id == this.current_user._id ? 'replies' : 'sent'" v-for="message in conversations">
+                    <li  :class="message.sender_id._id == current_user._id ? 'replies' : 'sent'" v-for="message in conversations">
                         <p>
+                            <span style="font-size:12px;float: left;color:#fc9775;font-weight:bold;" v-if="message.sender_id._id != current_user._id">{{(message.sender_id.name)}}</span> <br v-if="message.sender_id._id != current_user._id">
                             {{message.message}}<br>
                             <span style="font-size:10px;float: right;;">{{formatDate(message.createdAt)}}</span> 
                         </p> 
@@ -259,7 +264,7 @@
                 onSocket(chat_id){
                     let that  = this;
                     this.socket.on(`chat-id-${chat_id}`, (message) => {  
-                        if(that.current_user._id != message.sender_id){ 
+                        if(that.current_user._id != message.sender_id._id){ 
                             this.conversations.push(message);
                             setTimeout(function(){
                                 that.onClickedScoll()
@@ -320,7 +325,7 @@
                             this.onSocket(data.chats[0]._id)
                         }
                         let contactIndex = this.chats.findIndex(e => e._id == data.chats[0]._id)
-                        // this.chats[contactIndex].last_message = this.message;
+                        this.chats[contactIndex].last_message = this.message;
                         this.message = '';
                         let that  = this;
                         setTimeout(function(){
@@ -331,6 +336,7 @@
                 onClickedChat(chat){
                     this.selected_chat_name = chat.is_group? chat.name : chat.employees[0].name;
                     this.selected_chat_id = chat._id; 
+                    this.selected_chat_participants  = chat.employees;
                     axios.get(`/api/get-conversations`, {
                         params :{
                             chat_id:chat._id

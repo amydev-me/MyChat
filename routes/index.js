@@ -120,12 +120,13 @@ router.post('/api/store-conversation', isAuthenticated, async(req, res) => {
         })
         .populate({ path: 'employees', model: Employee,  match: { _id: {$ne:  reqBody.sender_id}} }) 
         .populate({ path: 'last_sender', model: Employee }) 
-   
-        global.io.emit(`chat-id-${reqBody.chat_id}`, _newConv); 
+        let last_conversation = await Conversation.find({ _id:_newConv._id }).populate({ path: 'sender_id', model: Employee })   
+
+        global.io.emit(`chat-id-${reqBody.chat_id}`, last_conversation[0]); 
 
 
         res.send({
-            message: _newConv,
+            message: last_conversation[0],
             chats :chat 
         });
     }catch(e){
@@ -137,7 +138,7 @@ router.get('/api/get-conversations', async (req, res) => {
     let query = req.query
     let chat_id = query.chat_id;
 
-    let conversations = await Conversation.find({ chat_id:chat_id })
+    let conversations = await Conversation.find({ chat_id:chat_id }).populate({ path: 'sender_id', model: Employee }) 
     
     res.send({
         conversations
@@ -173,6 +174,7 @@ router.get('/api/get-chats', isAuthenticated, async (req, res) => {
     .sort({updatedAt: -1})
     .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: employee_id}} }) 
     .populate({ path: 'last_sender', model: Employee }) 
+    .populate({ path: 'createdBy', model: Employee })
     .exec(function (err, data) {
         res.send({
             chats : data 
@@ -198,7 +200,8 @@ router.post('/api/create-group',isAuthenticated, async(req, res) => {
         const newChat= await new Chat({
             name:reqBody.name,
             is_group :true,
-            employees : reqBody.employees
+            employees : reqBody.employees,
+            createdBy : mongoose.Types.ObjectId(req.user.user_id)
         });
         const _newChat = await newChat.save();
         reqBody.chat_id = _newChat._id;
@@ -210,7 +213,9 @@ router.post('/api/create-group',isAuthenticated, async(req, res) => {
             "_id" : { $in : reqBody.chat_id } 
         })
         .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: req.user.user_id }} }) 
-        .populate({ path: 'last_sender', model: Employee });
+        .populate({ path: 'last_sender', model: Employee })
+        .populate({ path: 'createdBy', model: Employee });
+
 
         reqBody.employees.forEach(user_id => {
             if(user_id !== req.user.user_id){

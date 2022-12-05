@@ -18,6 +18,10 @@ const ChatSchecma=new mongoose.Schema({
         type: Schema.Types.ObjectId, 
         ref: "Employee",
     },
+    createdBy : {
+        type: Schema.Types.ObjectId, 
+        ref: "Employee",
+    },
     conversations: [
         {
             type: Schema.Types.ObjectId,
@@ -29,7 +33,8 @@ const ChatSchecma=new mongoose.Schema({
             type: Schema.Types.ObjectId,
             ref: "Employee"
         }
-    ]
+    ],
+   
 },{ timestamps: true });
 
 module.exports = new mongoose.model("Chat", ChatSchecma);
