@@ -6,7 +6,7 @@ global.io = io;
 require('dotenv').config()
 const port = process.env.PORT
  
-require("./config/database")
+require("./Config/database")
 
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
