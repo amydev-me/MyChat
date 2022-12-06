@@ -172,7 +172,8 @@ router.get('/api/get-chats', isAuthenticated, async (req, res) => {
         "_id" : { $in : chatIds } 
     })
     .sort({updatedAt: -1})
-    .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: employee_id}} }) 
+    // .populate({ path: 'employees', model: Employee,  match: { _id: {$ne: employee_id}} }) 
+    .populate({ path: 'employees', model: Employee }) 
     .populate({ path: 'last_sender', model: Employee }) 
     .populate({ path: 'createdBy', model: Employee })
     .exec(function (err, data) {

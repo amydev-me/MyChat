@@ -38,10 +38,16 @@
                         <div class="wrap" >
                             <img src="./images/user.png"  />
                             <div class="meta">
-                                <p class="name">{{item.name}}</p>
-                               <p class="preview">Software Engineer</p>
+                                
+                                <p class="name">{{item.name}} </p>
+                                <p class="preview">Software Engineer </p>
+                                
                             </div>
+                            
+
                         </div> 
+                        <span class="preview" style="margin-top:2px;color:orange;" v-if="selected_chat?(selected_chat.createdBy._id == item._id?true:false):false"> Group Creator </span>
+
                     </li> 
                 </ul>
             </div>
@@ -71,10 +77,7 @@
                     </li> 
                 </ul>
             </div>
-            <!-- <div id="group-bar" style="margin:0 auto;padding: 0 auto;">
-                <button  id="addcontact" @click="onClickedCreateGroup" ><i class="fa fa-user-plus fa-fw" aria-hidden="true" ></i> <span>Create Group</span></button>
-                <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button> 
-            </div>-->
+            
         </div>
         <!--END NEW CHAT-->
         <div id="sidepanel" style="border-right: 0.5px solid #99999B;" v-show="showContact== 1">
@@ -88,8 +91,7 @@
             </div>
             <div id="group-name">
                 <input type="text" placeholder="Group Name" style="margin-bottom:5px;" v-model="group.name"/>
-               <!-- <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
-                <input type="text" placeholder="Search contacts..." />-->
+               
             </div>
             <div id="contacts" v-show="showContact == 1"> 
                 <ul>
@@ -105,9 +107,8 @@
                     </li> 
                 </ul>
             </div>
-            <div id="group-bar" style="margin:0 auto;padding: 0 auto;">
-                <button  id="addcontact" @click="onClickedCreateGroup" ><i class="fa fa-user-plus fa-fw" aria-hidden="true" v-if="group.name" ></i> <span>Create Group</span></button>
-                <!-- <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>View Employees</span></button> -->
+            <div id="group-bar" style="margin:0 auto;padding: 0 auto;" v-if="group.name" >
+                <button  id="addcontact" @click="onClickedCreateGroup" ><i class="fa fa-user-plus fa-fw" aria-hidden="true" ></i> <span>Create Group</span></button> 
             </div>
         </div>
         <!--END GROUP NEW CHAT-->
@@ -169,7 +170,7 @@
                 <button id="addcontact" @click="onClickedGroupSidebar"><i class="fa fa-users fa-fw" aria-hidden="true" ></i> <span>New Group</span></button>
             </div>
         </div>
-          <!--END Left Sidebar-->
+        <!--END Left Sidebar-->
 
 
         <div class="content" v-if="selected_chat_id || isNew">
@@ -225,19 +226,12 @@
                     group :{
                         name : null,
                         employees : []
-                    },
-                    
-                    showContact: 0,
-                   
-
-
-                    
+                    }, 
+                    showContact: 0, 
                     //   ('http://localhost:3000',{
                     //       secure: true,
                     //       rejectUnauthorized: false,
                     //       rememberUpgrade:true 
-
-
                     //   })
                     message : null,
                     conversations : [],
@@ -251,12 +245,14 @@
                     receiver_id : null,
                     selected_chat_name : null,
                     showGroup : false,
-                    selected_chat_participants : []
+                    selected_chat_participants : [],
+                    selected_chat : null
                 }
             },
             methods : {
                 onClickedShowGroupInfo(){
                     this.showGroup = true
+                    
                 },
                 formatDate(_date){
                     return moment(_date).format('hh:mm A')
@@ -334,9 +330,10 @@
                     })
                 },
                 onClickedChat(chat){
+                    this.selected_chat = chat;
                     this.selected_chat_name = chat.is_group? chat.name : chat.employees[0].name;
                     this.selected_chat_id = chat._id; 
-                    this.selected_chat_participants  = chat.employees;
+                    this.selected_chat_participants  = chat.is_group ? chat.employees : [];
                     axios.get(`/api/get-conversations`, {
                         params :{
                             chat_id:chat._id
