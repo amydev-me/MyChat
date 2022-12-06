@@ -1,5 +1,5 @@
 {
-  "name": "online-scheduling",
+  "name": "mychat-app",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
@@ -28,5 +28,8 @@
   "devDependencies": {
     "dotenv": "^8.6.0",
     "nodemon": "^2.0.13"
+  },
+  "engines": {
+    "node": "14.x"
   }
 }
