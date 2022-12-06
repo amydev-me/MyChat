@@ -15,9 +15,9 @@ app.set('view engine','ejs')
  
 app.use(express.static('public'))
 app.use(require("./routes/index"))
- 
-http.listen(process.env.PORT, function () {
-  console.log('Server started on port ' + process.env.PORT);
+const PORT = process.env.PORT|| 3000
+http.listen(PORT, function () {
+  console.log('Server started on port ' + PORT);
   // io.on('connection', (socket) => {
   //   io.emit('some event', { someProperty: 'some value', otherProperty: 'other value' }); // This will emit the event to all connected sockets
   // });
