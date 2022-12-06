@@ -78,21 +78,31 @@ router.post('/api/create-employee' ,isAuthenticated, async (req, res) => {
     }
 })
 
+function getParticipantsId(participants){
+    let ids = [];
+
+    participants.forEach(e => ids.push(e._id));
+
+    return ids;
+}
+
 router.post('/api/store-conversation', isAuthenticated, async(req, res) => {
     const reqBody = req.body; 
     reqBody.sender_id = req.user.user_id;
     // reqBody.sender_id = employee_id;
     try{
-        if(!reqBody.chat_id){
+        const newParticipants = [];
+        if(!reqBody.chat_id){ 
+
             const newChat= await new Chat({
                 name:'-',
                 is_group :false,
-                employees : [ reqBody.sender_id, reqBody.receiver_id]
+                employees : [ mongoose.Types.ObjectId(reqBody.sender_id),  mongoose.Types.ObjectId(reqBody.receiver_id)] 
             });
             const _newChat = await newChat.save();
             reqBody.chat_id = _newChat._id;
           
-            const insertMany =  await  Participant.insertMany([
+            const newParticipants =  await  Participant.insertMany([
                 {
                     chat_id : mongoose.Types.ObjectId(reqBody.chat_id),
                     employee_id : mongoose.Types.ObjectId( reqBody.sender_id)
@@ -101,11 +111,25 @@ router.post('/api/store-conversation', isAuthenticated, async(req, res) => {
                     chat_id : mongoose.Types.ObjectId(reqBody.chat_id),
                     employee_id : mongoose.Types.ObjectId(reqBody.receiver_id)
                 }
-            ])
-            
+            ])  
+
+            let participant_ids = await getParticipantsId(newParticipants)
+            const _1 = await Chat.updateOne(
+                {'_id' : mongoose.Types.ObjectId(reqBody.chat_id)},
+                { $set: { participants: participant_ids}}
+            );
         }
         const newConv= await new Conversation(reqBody);
         const _newConv = await newConv.save();
+
+        let parcs =  await Participant.updateMany({
+                        "chat_id" : { $in : reqBody.chat_id },
+                        "employee_id": {$ne:  reqBody.sender_id}},
+                    {
+                        $inc : {'unread_count' : 1}
+                    });
+
+        
 
         const doc = await Chat.updateOne(
             {'_id' : mongoose.Types.ObjectId(reqBody.chat_id)},
@@ -120,6 +144,7 @@ router.post('/api/store-conversation', isAuthenticated, async(req, res) => {
         })
         .populate({ path: 'employees', model: Employee,  match: { _id: {$ne:  reqBody.sender_id}} }) 
         .populate({ path: 'last_sender', model: Employee }) 
+        .populate({ path: 'participants', model: Participant ,  match: { employee_id: {$ne:  reqBody.sender_id}} })
         let last_conversation = await Conversation.find({ _id:_newConv._id }).populate({ path: 'sender_id', model: Employee })   
 
         global.io.emit(`chat-id-${reqBody.chat_id}`, last_conversation[0]); 
@@ -134,7 +159,25 @@ router.post('/api/store-conversation', isAuthenticated, async(req, res) => {
     }
 }) 
 
-router.get('/api/get-conversations', async (req, res) => {
+router.get('/api/reset-read-count',isAuthenticated, async (req, res) => {
+    let query = req.query
+    let chat_id = query.chat_id;
+    let employee_id = req.user.user_id;
+
+    let parcs =  await Participant.updateMany({
+            "chat_id" : { $in : reqBody.chat_id },
+            "employee_id": {$ne:  reqBody.sender_id}
+        },
+        {
+            $set:{"unread_count": 0}
+        });
+    
+    res.send({
+        conversations
+    })
+});
+
+router.get('/api/get-conversations', isAuthenticated, async (req, res) => {
     let query = req.query
     let chat_id = query.chat_id;
 
@@ -176,6 +219,7 @@ router.get('/api/get-chats', isAuthenticated, async (req, res) => {
     .populate({ path: 'employees', model: Employee }) 
     .populate({ path: 'last_sender', model: Employee }) 
     .populate({ path: 'createdBy', model: Employee })
+    .populate({ path: 'participants', model: Participant ,  match: { employee_id: {$in: employee_id}}})
     .exec(function (err, data) {
         res.send({
             chats : data 

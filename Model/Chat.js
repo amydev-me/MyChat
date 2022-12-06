@@ -34,6 +34,12 @@ const ChatSchecma=new mongoose.Schema({
             ref: "Employee"
         }
     ],
+    participants:[
+        {
+            type: Schema.Types.ObjectId,
+            ref: "Participant"
+        }
+    ],
    
 },{ timestamps: true });
 

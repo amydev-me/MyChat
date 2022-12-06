@@ -14,8 +14,9 @@
      <link rel="stylesheet" href="./css/right.css">
  </head>
 <body>
-
+   
     <div id="frame">
+       
         <div id="rightsidepanel" style="border-left: 0.5px solid #99999B;" v-show="showGroup ">
             <div id="profile">
                 <div class="wrap">
@@ -112,7 +113,7 @@
             </div>
         </div>
         <!--END GROUP NEW CHAT-->
-
+     
         <div id="sidepanel" style="border-right: 0.5px solid #99999B;" v-show="showContact == 0">
           
             <div id="profile">
@@ -142,17 +143,23 @@
                 <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
                 <input type="text" placeholder="Search contacts..." />
             </div>
-            <div id="contacts">
+          
+            <div id="contacts" style="margin-top:2px;">
+              
                 <ul>
-                    <li :key="index" class="contact" v-for="(item,index) in chats" @click="onClickedChat(item)">
+                    <li :key="index" :class="selected_chat_id == item._id ? 'contact active' : 'contact'" v-for="(item,index) in chats" @click="onClickedChat(item)">
+                      
                         <div class="wrap" v-if="!item.is_group">
                             <img src="./images/user.png" alt="" />
                             <div class="meta">
-                                <p class="name"> {{item.employees?item.employees[0].name:null}}</p>
-                               <p class="preview">{{item.last_message}}</p>
+                                <p class="preview"> {{item.employees?item.employees.find(e => e._id != current_user._id).name:null}} <span class="circle1" style="float:right !important">1</span> 
+                                 
+                                </p> 
+                                <div class="preview ">{{item.last_message}}    <span  style="float:right !important;margin-right:25px;">{{formatDate(item.updatedAt)}}</span></div> 
                             </div>
                         </div>
                         <div class="wrap" v-if="item.is_group">
+                           
                             <img src="./images/group.png" alt="" />
                             <div class="meta">
                                 <p class="name">{{item.name}}</p>
@@ -160,7 +167,9 @@
                                 <p class="preview" v-if="!item.last_message">Created New Group by : {{item.createdBy?item.createdBy.name:null}}</p>
 
                             </div>
+                           
                        </div>
+                      
                     </li> 
                 </ul>
             </div>
@@ -329,12 +338,18 @@
                         },100)
                     })
                 },
-                onClickedChat(chat){
+                onClickedChat(chat){ 
                     this.selected_chat = chat;
-                    this.selected_chat_name = chat.is_group? chat.name : chat.employees[0].name;
+                    let participant_name = null;
+                    if(!chat.is_group){
+                        let employee = chat.employees.find(e => e._id != this.current_user._id);
+                        participant_name = employee ? employee.name : null;
+                    }
+                    this.selected_chat_name = chat.is_group? chat.name : participant_name;
                     this.selected_chat_id = chat._id; 
                     this.selected_chat_participants  = chat.is_group ? chat.employees : [];
                     axios.get(`/api/get-conversations`, {
+                        headers : this.getHeaders(),
                         params :{
                             chat_id:chat._id
                         }
@@ -342,7 +357,7 @@
                         this.conversations = data.conversations; 
                         let that = this;
                        
-                        this.onSocket(chat._id)
+                        // this.onSocket(chat._id)
                         setTimeout(function(){
                             that.onClickedScoll()
                         },100)
@@ -367,6 +382,9 @@
                 loadData(){ 
                     axios.get(`/api/get-chats`, {  headers : this.getHeaders()}).then(({data}) => {
                         this.chats = data.chats;
+                        this.chats.forEach(chat => {
+                            this.onSocket(chat._id)
+                        })
                     }).catch(error => {
                        
                         if(error.response.status == 401){

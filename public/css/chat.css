@@ -302,7 +302,7 @@ body {
   #frame #sidepanel #search input {
     font-family: "proxima-nova",  "Source Sans Pro", sans-serif;
     padding: 10px 0 10px 46px;
-    width: calc(100% - 25px);
+    width: calc(100% - 8px);
     border: none;
     background: #32465a;
     color: #f5f5f5;
@@ -439,7 +439,7 @@ body {
     border: none;
     padding: 0 2px 0 0;
     margin: 0 0 0 1px;
-    opacity: .5;
+    
   }
   #frame #sidepanel #bottom-bar {
     position: absolute;
@@ -761,4 +761,16 @@ body {
   }
   #frame #sidepanel #group-name input:-moz-placeholder {
     color: #f5f5f5;
+  }
+
+
+  .circle1 {
+    background-color:#2ecc71!important;
+    
+    width: 20px !important;
+    height: 20px !important;
+    color:white !important;
+    text-align: center;
+    border-radius: 50px !important;/* specify the radius */
+    line-height:20px;
   }
