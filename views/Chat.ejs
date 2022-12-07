@@ -147,12 +147,18 @@
             <div id="contacts" style="margin-top:2px;">
               
                 <ul>
-                    <li :key="index" :class="selected_chat_id == item._id ? 'contact active' : 'contact'" v-for="(item,index) in chats" @click="onClickedChat(item)">
+                    <li :key="index" :class="selected_chat_id == item._id ? 'contact active' : 'contact'" v-for="(item,index) in chats" @click="onClickedChat(item, index)">
                       
                         <div class="wrap" v-if="!item.is_group">
                             <img src="./images/user.png" alt="" />
                             <div class="meta">
-                                <p class="preview"> {{item.employees?item.employees.find(e => e._id != current_user._id).name:null}} <span class="circle1" style="float:right !important">1</span> 
+                                <p class="preview"> {{item.employees?item.employees.find(e => e._id != current_user._id).name:null}} 
+                                  
+                                    <span class="circle1" style="float:right !important" v-if="item.participants.find(e=>e.employee_id == current_user._id).unread_count > 0"> 
+                                        {{
+                                            item.participants.find(e=>e.employee_id == current_user._id).unread_count
+                                        }}
+                                    </span>   
                                  
                                 </p> 
                                 <div class="preview ">{{item.last_message}}    <span  style="float:right !important;margin-right:25px;">{{formatDate(item.updatedAt)}}</span></div> 
@@ -162,7 +168,14 @@
                            
                             <img src="./images/group.png" alt="" />
                             <div class="meta">
-                                <p class="name">{{item.name}}</p>
+                                <p class="preview">
+                                    {{item.name}}
+                                    <span class="circle1" style="float:right !important" v-if="item.participants.find(e=>e.employee_id == current_user._id).unread_count > 0"> 
+                                        {{
+                                            item.participants.find(e=>e.employee_id == current_user._id).unread_count
+                                        }}
+                                    </span> 
+                                </p>
                                 <p class="preview" v-if="item.last_message"><span>{{item.last_sender?item.last_sender.name:null}} : </span></span>{{item.last_message}}</p>
                                 <p class="preview" v-if="!item.last_message">Created New Group by : {{item.createdBy?item.createdBy.name:null}}</p>
 
@@ -268,12 +281,33 @@
                 },
                 onSocket(chat_id){
                     let that  = this;
-                    this.socket.on(`chat-id-${chat_id}`, (message) => {  
-                        if(that.current_user._id != message.sender_id._id){ 
-                            this.conversations.push(message);
-                            setTimeout(function(){
-                                that.onClickedScoll()
-                            },100)
+                    this.socket.on(`chat-id-${chat_id}`, (payload) => {  
+                        let message  = payload.message; 
+
+                        if(that.selected_chat_id != chat_id){ 
+                            let payloadChat = payload.chats[0]; 
+                            let _chatIndex = this.chats.findIndex(e => e._id == chat_id); 
+                          
+                            
+                            if(_chatIndex > -1){
+                                this.chats[_chatIndex].last_sender = payloadChat.last_sender;
+                                this.chats[_chatIndex].last_message = message.message;
+
+                                let _partIndex = this.chats[_chatIndex].participants.findIndex(e => e.employee_id == this.current_user._id);                               
+                                this.chats[_chatIndex].participants[_partIndex].unread_count = +this.chats[_chatIndex].participants[_partIndex].unread_count + 1;
+                            }else{
+                                // this.chats.unshift(payloadChat)
+                                // this.onSocket(payloadChat._id)
+                            }
+                        }else{
+                            if(that.current_user._id != message.sender_id._id){ 
+                                this.conversations.push(message);
+                                if(this.selected_chat_id){
+                                    setTimeout(function(){
+                                        that.onClickedScoll()
+                                    },100)
+                                } 
+                            }
                         }
                     });
                 },
@@ -325,12 +359,14 @@
                         this.conversations.push(data.message);
                         let _tmpChat = this.chats.find(e => e._id == data.chats[0]._id)
                         if(!_tmpChat){
+                            
                             this.selected_chat_id = data.chats[0]._id;
                             this.chats.unshift(data.chats[0])
                             this.onSocket(data.chats[0]._id)
                         }
                         let contactIndex = this.chats.findIndex(e => e._id == data.chats[0]._id)
                         this.chats[contactIndex].last_message = this.message;
+                        this.chats[contactIndex].last_sender = data.chats[0].last_sender;
                         this.message = '';
                         let that  = this;
                         setTimeout(function(){
@@ -338,7 +374,7 @@
                         },100)
                     })
                 },
-                onClickedChat(chat){ 
+                onClickedChat(chat, index){ 
                     this.selected_chat = chat;
                     let participant_name = null;
                     if(!chat.is_group){
@@ -348,15 +384,28 @@
                     this.selected_chat_name = chat.is_group? chat.name : participant_name;
                     this.selected_chat_id = chat._id; 
                     this.selected_chat_participants  = chat.is_group ? chat.employees : [];
+                    let participant = chat.participants.find(e=> e.employee_id== this.current_user._id)
                     axios.get(`/api/get-conversations`, {
                         headers : this.getHeaders(),
+                       
                         params :{
-                            chat_id:chat._id
+                            chat_id:chat._id,
+                            unread_count : participant?participant.unread_count : 0 ,
                         }
                     }).then(({data}) => {
+                        let chatIndex = this.chats.findIndex(e => e._id == chat._id);
+                        if(chatIndex > -1){
+                            let participantIndex = this.chats[chatIndex].participants.findIndex(e=> e.employee_id== this.current_user._id);
+                            if(participantIndex > -1){ 
+                                this.chats[chatIndex].participants[participantIndex].unread_count = 0;
+                            } 
+                        }
+                          
+                      
+
                         this.conversations = data.conversations; 
                         let that = this;
-                       
+                        
                         // this.onSocket(chat._id)
                         setTimeout(function(){
                             that.onClickedScoll()
@@ -382,6 +431,7 @@
                 loadData(){ 
                     axios.get(`/api/get-chats`, {  headers : this.getHeaders()}).then(({data}) => {
                         this.chats = data.chats;
+
                         this.chats.forEach(chat => {
                             this.onSocket(chat._id)
                         })
@@ -395,8 +445,9 @@
                 },
                 listeningNewGroup(){
                     let that  = this;
-                    this.socket.on(`new-group-noti-${this.current_user._id}`, (chats) => { 
-                        that.chats.unshift(chats[0])
+                    this.socket.on(`new-group-noti-${this.current_user._id}`, (chats) => {  
+                        console.log(chats)
+                        // that.chats.unshift(chats[0])
                     });
                 },
                 whoAmI(){

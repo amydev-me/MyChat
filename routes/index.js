@@ -91,6 +91,7 @@ router.post('/api/store-conversation', isAuthenticated, async(req, res) => {
     reqBody.sender_id = req.user.user_id;
     // reqBody.sender_id = employee_id;
     try{
+        let isNewChat = false;
         const newParticipants = [];
         if(!reqBody.chat_id){ 
 
@@ -105,11 +106,13 @@ router.post('/api/store-conversation', isAuthenticated, async(req, res) => {
             const newParticipants =  await  Participant.insertMany([
                 {
                     chat_id : mongoose.Types.ObjectId(reqBody.chat_id),
-                    employee_id : mongoose.Types.ObjectId( reqBody.sender_id)
+                    employee_id : mongoose.Types.ObjectId( reqBody.sender_id),
+                    unread_count : 0
                 },
                 {
                     chat_id : mongoose.Types.ObjectId(reqBody.chat_id),
-                    employee_id : mongoose.Types.ObjectId(reqBody.receiver_id)
+                    employee_id : mongoose.Types.ObjectId(reqBody.receiver_id),
+                    unread_count : 0
                 }
             ])  
 
@@ -118,6 +121,8 @@ router.post('/api/store-conversation', isAuthenticated, async(req, res) => {
                 {'_id' : mongoose.Types.ObjectId(reqBody.chat_id)},
                 { $set: { participants: participant_ids}}
             );
+
+            isNewChat = true;
         }
         const newConv= await new Conversation(reqBody);
         const _newConv = await newConv.save();
@@ -144,18 +149,25 @@ router.post('/api/store-conversation', isAuthenticated, async(req, res) => {
         })
         .populate({ path: 'employees', model: Employee,  match: { _id: {$ne:  reqBody.sender_id}} }) 
         .populate({ path: 'last_sender', model: Employee }) 
-        .populate({ path: 'participants', model: Participant ,  match: { employee_id: {$ne:  reqBody.sender_id}} })
+        .populate({ path: 'participants', model: Participant  })
+        // ,  match: { employee_id: {$ne:  reqBody.sender_id}}
         let last_conversation = await Conversation.find({ _id:_newConv._id }).populate({ path: 'sender_id', model: Employee })   
 
-        global.io.emit(`chat-id-${reqBody.chat_id}`, last_conversation[0]); 
-
+        if(!isNewChat){
+            global.io.emit(`chat-id-${reqBody.chat_id}`, {
+                message: last_conversation[0],
+                chats :chat 
+            }); 
+        }else{ 
+            global.io.emit(`new-group-noti-${reqBody.receiver_id}`, chat);  
+        } 
 
         res.send({
             message: last_conversation[0],
             chats :chat 
         });
     }catch(e){
-        res.status(500).send('Error')
+        res.status(e).send('Error')
     }
 }) 
 
@@ -180,6 +192,16 @@ router.get('/api/reset-read-count',isAuthenticated, async (req, res) => {
 router.get('/api/get-conversations', isAuthenticated, async (req, res) => {
     let query = req.query
     let chat_id = query.chat_id;
+    let employee_id = req.user.user_id;
+
+    if(query.unread_count > 0){
+        await Participant.updateOne(
+            {'employee_id' : mongoose.Types.ObjectId(employee_id), 'chat_id' :mongoose.Types.ObjectId(chat_id)},
+            { 
+                unread_count : 0
+            }
+        );
+    }
 
     let conversations = await Conversation.find({ chat_id:chat_id }).populate({ path: 'sender_id', model: Employee }) 
     
@@ -219,7 +241,8 @@ router.get('/api/get-chats', isAuthenticated, async (req, res) => {
     .populate({ path: 'employees', model: Employee }) 
     .populate({ path: 'last_sender', model: Employee }) 
     .populate({ path: 'createdBy', model: Employee })
-    .populate({ path: 'participants', model: Participant ,  match: { employee_id: {$in: employee_id}}})
+    .populate({ path: 'participants', model: Participant})
+    // ,  match: { employee_id: {$in: employee_id}}
     .exec(function (err, data) {
         res.send({
             chats : data 
@@ -232,7 +255,8 @@ function getEmployees(employees, chat_id){
     employees.forEach(e => {
         _employees.push({
             chat_id : mongoose.Types.ObjectId(chat_id),
-            employee_id : mongoose.Types.ObjectId(e)
+            employee_id : mongoose.Types.ObjectId(e),
+            unread_count : 0
         })
     })
     return _employees;
@@ -252,7 +276,13 @@ router.post('/api/create-group',isAuthenticated, async(req, res) => {
         reqBody.chat_id = _newChat._id;
         let employees =  await getEmployees(reqBody.employees, _newChat._id)
        
-        const insertMany =  await  Participant.insertMany(employees) 
+        const newParticipants =  await  Participant.insertMany(employees) 
+
+        let participant_ids = await getParticipantsId(newParticipants)
+        const _1 = await Chat.updateOne(
+            {'_id' : mongoose.Types.ObjectId(reqBody.chat_id)},
+            { $set: { participants: participant_ids}}
+        );
 
         let chat = await Chat.find({
             "_id" : { $in : reqBody.chat_id } 
