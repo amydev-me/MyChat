@@ -18,6 +18,10 @@ const ConversationSchema=new mongoose.Schema({
         type: String,
         required: false
     },
+    reply_from: {
+        type: Schema.Types.ObjectId,
+        ref: "Conversation",
+    },
 },{ timestamps: true });
 
 module.exports=new mongoose.model("conversation", ConversationSchema);
