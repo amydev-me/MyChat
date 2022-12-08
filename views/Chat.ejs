@@ -324,8 +324,7 @@
                     this.receiver_id = employee._id;
                     this.selected_chat_id = null;
                     this.conversations = [];
-                    this.showContact = 0;
-                    
+                    this.showContact = 0; 
                 },
                 onClickedCreateGroup(){
                     let empIds = [];
@@ -339,11 +338,12 @@
                         name : this.group.name,
                         employees : empIds
                     }, { headers : this.getHeaders()}).then(({data}) => { 
-                        this.chats.unshift(data.chats[0]) 
-                        this.selected_chat_name = data.chats[0].name; 
-                        this.selected_chat_id = data.chats[0]._id;
-                        this.showContact = 0;
-                        this.group.employees = []; 
+                        console.log(data)
+                        // this.chats.unshift(data.chats[0]) 
+                        // this.selected_chat_name = data.chats[0].name; 
+                        // this.selected_chat_id = data.chats[0]._id;
+                        // this.showContact = 0;
+                        // this.group.employees = []; 
                     }).catch(error => {
 
                     })
@@ -446,8 +446,9 @@
                 listeningNewGroup(){
                     let that  = this;
                     this.socket.on(`new-group-noti-${this.current_user._id}`, (chats) => {  
-                        console.log(chats)
-                        // that.chats.unshift(chats[0])
+                         
+                        that.chats.unshift(chats[0])
+                        this.onSocket(chats[0]._id)
                     });
                 },
                 whoAmI(){
