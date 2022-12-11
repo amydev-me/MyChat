@@ -259,7 +259,14 @@ router.get('/api/get-conversations', isAuthenticated, async (req, res) => {
 
 router.get('/api/get-employees', isAuthenticated, async(req,res) => {
      let employee_id = req.user.user_id;
-    let employees = await Employee.find({_id : {$ne:employee_id}}).exec(function(err, data){
+        
+
+    let employees = await Employee.find(
+        {
+            _id : {$ne:employee_id}, 
+            email : {$ne:'admin@gmail.com'}
+        }
+    ).exec(function(err, data){
         res.send({
             employees : data
         });
