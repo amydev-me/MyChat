@@ -380,7 +380,7 @@
                         name : this.group.name,
                         employees : empIds
                     }, { headers : this.getHeaders()}).then(({data}) => { 
-                        
+                        this.conversations = [];
                         this.chats.unshift(data.chats[0]) 
                         this.selected_chat_name = data.chats[0].name; 
                         this.selected_chat_id = data.chats[0]._id;
