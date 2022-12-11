@@ -41,7 +41,7 @@
                             <div class="meta">
                                 
                                 <p class="name">{{item.name}} </p>
-                                <p class="preview">Software Engineer </p>
+                                <p class="preview">{{item.position}}</p>
                                 
                             </div>
                             
@@ -72,7 +72,7 @@
                             <img src="./images/user.png"  />
                             <div class="meta">
                                 <p class="name">{{item.name}}</p>
-                               <p class="preview">Software Engineer</p>
+                               <p class="preview">{{item.position}}</p>
                             </div>
                         </div> 
                     </li> 
@@ -102,7 +102,7 @@
                             <img src="./images/user.png"  />
                             <div class="meta">
                                 <p class="name">{{item.name}}</p>
-                               <p class="preview">Software Engineer</p>
+                               <p class="preview">{{item.position}}</p>
                             </div>
                         </div> 
                     </li> 
@@ -507,10 +507,9 @@
                 }
             },
             mounted(){
-                // this.current_user = JSON.parse(localStorage.getItem('user'))
                 this.whoAmI();
                 this.getEmployees();
-                this.loadData(); 
+                // this.loadData(); 
                    
             }
         }).mount('#frame')

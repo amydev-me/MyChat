@@ -1,0 +1,28 @@
+.txt-danger{
+    color : red;
+}
+
+
+.alert {
+    position: relative;
+    padding: 20px 20px;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    width: 300px;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+
+/**
+Margin
+**/
+
+.mb-10 {
+    margin-bottom : 10px;
+}
