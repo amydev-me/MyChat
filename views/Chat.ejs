@@ -385,6 +385,8 @@
                         this.chats.unshift(data.chats[0]) 
                         this.selected_chat_name = data.chats[0].name; 
                         this.selected_chat_id = data.chats[0]._id;
+                        this.selected_chat_participants  = data.chats[0].is_group ? data.chats[0].employees : [];
+
                         this.showContact = 0;
                         this.group.employees = []; 
                     }).catch(error => {
