@@ -161,7 +161,7 @@
                                     </span>   
                                  
                                 </p> 
-                                <div class="preview ">{{item.last_message}}    <span  style="float:right !important;margin-right:25px;">{{formatDate(item.updatedAt)}}</span></div> 
+                                <div class="preview ">{{item.last_message.length > 10 ? item.last_message.slice(0,10) + '...': item.last_message}}    <span  style="float:right !important;margin-right:25px;">{{formatDate(item.updatedAt)}}</span></div> 
                             </div>
                         </div>
                         <div class="wrap" v-if="item.is_group">
@@ -176,7 +176,7 @@
                                         }}
                                     </span> 
                                 </p>
-                                <p class="preview" v-if="item.last_message"><span>{{item.last_sender?item.last_sender.name:null}} : </span></span>{{item.last_message}}</p>
+                                <p class="preview" v-if="item.last_message"><span>{{item.last_sender?item.last_sender.name:null}} : </span></span>{{item.last_message.length > 10 ? item.last_message.slice(0,10) + '...': item.last_message}}</p>
                                 <p class="preview" v-if="!item.last_message">Created New Group by : {{item.createdBy?item.createdBy.name:null}}</p>
 
                             </div>
@@ -509,7 +509,7 @@
             mounted(){
                 this.whoAmI();
                 this.getEmployees();
-                // this.loadData(); 
+                this.loadData(); 
                    
             }
         }).mount('#frame')
