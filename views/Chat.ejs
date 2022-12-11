@@ -141,13 +141,13 @@
             </div>
             <div id="search">
                 <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
-                <input type="text" placeholder="Search contacts..." />
+                <input type="text" placeholder="Search contacts..." v-model="search"/>
             </div>
           
             <div id="contacts" style="margin-top:2px;">
               
                 <ul>
-                    <li :key="index" :class="selected_chat_id == item._id ? 'contact active' : 'contact'" v-for="(item,index) in chats" @click="onClickedChat(item, index)">
+                    <li :key="index" :class="selected_chat_id == item._id ? 'contact active' : 'contact'" v-for="(item,index) in getChatList" @click="onClickedChat(item, index)">
                       
                         <div class="wrap" v-if="!item.is_group">
                             <img src="./images/user.png" alt="" />
@@ -245,6 +245,7 @@
         createApp({
             data() {
                 return {
+                    search : null,
                     socket :  io(),
                     isNew : false,
                     group :{
@@ -504,6 +505,15 @@
                         "Content-Type": "application/json",      
                         "Accept": "application/json",    
                     }; 
+                }
+            },
+            computed : {
+                getChatList(){
+                    if(this.search){
+
+                    }else{
+                        return this.chats;
+                    }
                 }
             },
             mounted(){
