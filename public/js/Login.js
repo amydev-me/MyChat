@@ -21,8 +21,12 @@ function onClickedSignIn(event){
      axios.post(`/api/login`, credentials).then(({data}) => {
         // localStorage.setItem('user', JSON.stringify(data.user))
         localStorage.setItem('token', data.token)
-        window.location.href = '/';
         
+        if(data.role == 'admin'){
+            window.location.href = '/admin';
+        }else{
+            window.location.href = '/';
+        }
         // window.location.href = window.location.origin;
     }).catch(error => {
          

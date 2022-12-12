@@ -18,6 +18,10 @@ router.get('/login' ,(req, res) => {
     res.render('Login')
 });
 
+router.get('/admin', (req, res) => {
+    res.render('Admin')
+});
+
 router.get("/api/whoami", isAuthenticated, async(req, res) => {
     let user = await Employee.findById(req.user.user_id);
     res.send(user)
@@ -42,7 +46,8 @@ router.post("/api/login", async(req, res) => {
             ); 
     
             return res.header("x-access-token", token).send({
-                token
+                token,
+                role : email == 'admin@gmail.com' ? 'admin' : 'employee'
             });
         }
         res.status(400).send("Invalid Credentials");
@@ -57,7 +62,20 @@ router.get('/logout', (req, res, next) => {
     res.redirect('/login');
 })
 
-router.post('/api/create-employee' ,isAuthenticated, async (req, res) => {
+router.get('/api/admin/get-employees', async (req, res) => {
+    try{ 
+        Employee.find({'email' : {$ne:'admin@gmail.com'}}).exec(function (err, items){
+            res.send({
+                items : items
+            })
+        });
+    
+    }catch(e){
+        res.send('Error', 500)
+    }
+})
+
+router.post('/api/create-employee', async (req, res) => {
     try{
         const staff = req.body;    
         const salt = bcrypt.genSaltSync(15);
@@ -67,7 +85,7 @@ router.post('/api/create-employee' ,isAuthenticated, async (req, res) => {
 
         const _newStaff = await newStaff.save();
 
-        Employee.find().exec(function (err, items){
+        Employee.find({'email' : {$ne:'admin@gmail.com'}}).exec(function (err, items){
             res.send({
                 items : items
             })
@@ -75,6 +93,29 @@ router.post('/api/create-employee' ,isAuthenticated, async (req, res) => {
     
     }catch(e){
         res.send('Error', 500)
+    }
+})
+
+router.post('/api/edit-employee', async (req, res) => {
+    try{
+        const staff = req.body;     
+         
+        let parcs =  await Employee.updateMany({
+            "_id" : { $in : staff._id }
+        },
+        {
+            position : staff.position,
+            phone : staff.phone,
+            name : staff.name
+        }); 
+        Employee.find({'email' : {$ne:'admin@gmail.com'}}).exec(function (err, items){
+            res.send({
+                items : items
+            })
+        });
+    
+    }catch(e){
+        res.status(500).send(e)
     }
 })
 
@@ -218,7 +259,14 @@ router.get('/api/get-conversations', isAuthenticated, async (req, res) => {
 
 router.get('/api/get-employees', isAuthenticated, async(req,res) => {
      let employee_id = req.user.user_id;
-    let employees = await Employee.find({_id : {$ne:employee_id}}).exec(function(err, data){
+        
+
+    let employees = await Employee.find(
+        {
+            _id : {$ne:employee_id}, 
+            email : {$ne:'admin@gmail.com'}
+        }
+    ).exec(function(err, data){
         res.send({
             employees : data
         });
