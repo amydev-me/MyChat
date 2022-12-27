@@ -1,4 +1,4 @@
-# Webased - Chat Application (My Chat) 
+# Webased - Chat Application (MyChat) 
 #### Video Demo :
 #### Demo : https://mychatapp.herokuapp.com/
 #### Description
