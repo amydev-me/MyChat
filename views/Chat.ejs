@@ -153,7 +153,10 @@
                             <img src="./images/user.png" alt="" />
                             <div class="meta">
                                 <p class="preview"> {{item.employees?item.employees.find(e => e._id != current_user._id).name:null}} 
-                                  
+                                    
+                                </p> 
+                                <div class="preview ">
+                                    {{item.last_message.length > 15 ? item.last_message.substring(0, 15) + '...' : item.last_message}}   
                                     <span class="circle1" style="float:right !important" v-if="item.participants.find(e=>e.employee_id == current_user._id).unread_count > 0"> 
                                         {{
                                             item.participants.find(e=>e.employee_id == current_user._id).unread_count
@@ -164,17 +167,21 @@
                                 <div class="preview ">{{item.last_message.length > 15 ? item.last_message.slice(0,15) + '...': item.last_message}}    <span  style="float:right !important;margin-right:25px;">{{formatDate(item.updatedAt)}}</span></div> 
                             </div>
                         </div>
-                        <div class="wrap" v-if="item.is_group">
-                           
+                        <div class="wrap" v-if="item.is_group"> 
                             <img src="./images/group.png" alt="" />
                             <div class="meta">
                                 <p class="preview">
                                     {{item.name}}
+                                    <span  style="float:right !important;margin-right:25px;">{{formatDate(item.updatedAt)}}</span> 
+                                </p>
+                                <p class="preview" v-if="item.last_message"><span>{{item.last_sender?item.last_sender.name:null}} : </span></span>{{item.last_message.length > 15 ? item.last_message.substring(0, 15) + '...' : item.last_message}}  
+                                
                                     <span class="circle1" style="float:right !important" v-if="item.participants.find(e=>e.employee_id == current_user._id).unread_count > 0"> 
                                         {{
                                             item.participants.find(e=>e.employee_id == current_user._id).unread_count
                                         }}
                                     </span> 
+                                
                                 </p>
                                 <p class="preview" v-if="item.last_message"><span>{{item.last_sender?item.last_sender.name:null}} : </span></span>{{item.last_message.length > 15 ? item.last_message.slice(0,15) + '...': item.last_message}} <span  style="float:right !important;margin-right:25px;">{{formatDate(item.updatedAt)}}</span></p>
                                 <p class="preview" v-if="!item.last_message">Created New Group by : {{item.createdBy ? item.createdBy.name : null}}</p>
