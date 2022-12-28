@@ -389,6 +389,7 @@
 
                         this.showContact = 0;
                         this.group.employees = []; 
+                        this.onSocket(data.chats[0]._id)
                     }).catch(error => {
 
                     })
