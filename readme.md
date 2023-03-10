@@ -1,6 +1,6 @@
 # Webased - Chat Application (MyChat) 
-#### Video Demo : https://youtu.be/f4F3n4UDcvU
-#### Demo : https://mychatapp.herokuapp.com/
+ 
+ 
 #### Description
 The chat application has been designed for office use, and has been used for a variety of purposes such as networking, collaborating on projects, or staying in touch with employees. This application allows users to communicate with one another in real time through text-based messages. The chat application may have features such as the ability to create and join group chat rooms, the ability to send and receive private messages, and the ability to send and receive files such as images and documents. The application may be accessed through a web-based interface. It may also have features such as the ability to customize user profiles and access a list of previous chats.
 
